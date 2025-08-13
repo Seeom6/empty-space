@@ -1,87 +1,92 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { Search, Plus, Copy, Ban, Mail, UserCheck, Calendar } from 'lucide-react'
-import { mockInviteCodes, departments } from './mockData'
-import { InviteCode, InviteStatus } from './types'
+import { Plus, Copy, Ban, RotateCcw, Eye, Grid, List, Mail } from 'lucide-react'
+import { InviteCode } from './types'
 import { CreateInviteModal } from './CreateInviteModal'
-import { format } from 'date-fns'
+import { InviteCard } from './components/InviteCard'
+import { InviteStats } from './components/InviteStats'
+import { InviteFilters } from './components/InviteFilters'
+import { useInvites } from './hooks/useInvites'
+import { useModalState } from './hooks/useModalState'
+import { canManageInvites, getInviteStatusBadgeVariant, formatDate } from './utils'
+import toast from 'react-hot-toast'
 
 interface InviteManagementProps {
   userRole: string
 }
 
 export function InviteManagement({ userRole }: InviteManagementProps) {
-  const [invites, setInvites] = useState<InviteCode[]>(mockInviteCodes)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState<string>('all')
-  const [filterDepartment, setFilterDepartment] = useState<string>('all')
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
 
-  const canManageInvites = userRole === 'Admin' || userRole === 'HR'
+  const {
+    invites,
+    filteredInvites,
+    stats,
+    filters,
+    isLoading,
+    error,
+    actions
+  } = useInvites()
 
-  const filteredInvites = invites.filter(invite => {
-    const matchesSearch = invite.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invite.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invite.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (invite.usedBy && invite.usedBy.toLowerCase().includes(searchTerm.toLowerCase()))
-    
-    const matchesStatus = filterStatus === 'all' || invite.status === filterStatus
-    const matchesDepartment = filterDepartment === 'all' || invite.department === filterDepartment
-    
-    return matchesSearch && matchesStatus && matchesDepartment
-  })
+  const {
+    modalState,
+    openCreateModal,
+    closeModal
+  } = useModalState<InviteCode>()
 
-  const handleCopyCode = (code: string) => {
+  const canManage = canManageInvites(userRole)
+
+  const handleCopyCode = useCallback((code: string) => {
     navigator.clipboard.writeText(code)
-    alert('Invite code copied to clipboard!')
+    toast.success('Invite code copied to clipboard!')
+  }, [])
+
+  const handleRevokeInvite = useCallback((inviteId: string) => {
+    actions.revokeInvite(inviteId)
+    toast.success('Invite code revoked successfully!')
+  }, [actions])
+
+  const handleResendInvite = useCallback((inviteId: string) => {
+    actions.resendInvite(inviteId)
+    toast.success('Invite code resent successfully!')
+  }, [actions])
+
+  const handleClearFilters = useCallback(() => {
+    actions.setFilters({
+      search: '',
+      status: 'all',
+      department: 'all',
+      role: 'all',
+      dateRange: 'all'
+    })
+  }, [actions])
+
+  const handleInviteCreated = useCallback((newInvite: InviteCode) => {
+    actions.createInvite(newInvite)
+    closeModal()
+    toast.success('Invite code created successfully!')
+  }, [actions, closeModal])
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-2">Error loading invitations</p>
+          <Button onClick={actions.refreshInvites} variant="outline">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
   }
 
-  const handleRevokeInvite = (inviteId: string) => {
-    setInvites(prev => prev.map(invite =>
-      invite.id === inviteId ? { ...invite, status: 'revoked' as InviteStatus } : invite
-    ))
-  }
-
-  const getStatusBadgeVariant = (status: InviteStatus) => {
-    switch (status) {
-      case 'active': return 'default'
-      case 'used': return 'secondary'
-      case 'expired': return 'outline'
-      case 'revoked': return 'destructive'
-      default: return 'outline'
-    }
-  }
-
-  const getStatusIcon = (status: InviteStatus) => {
-    switch (status) {
-      case 'active': return <Mail className="h-3 w-3" />
-      case 'used': return <UserCheck className="h-3 w-3" />
-      case 'expired': return <Calendar className="h-3 w-3" />
-      case 'revoked': return <Ban className="h-3 w-3" />
-      default: return <Mail className="h-3 w-3" />
-    }
-  }
-
-  const getInviteStats = () => {
-    const total = invites.length
-    const active = invites.filter(i => i.status === 'active').length
-    const used = invites.filter(i => i.status === 'used').length
-    const expired = invites.filter(i => i.status === 'expired').length
-
-    return { total, active, used, expired }
-  }
-
-  const stats = getInviteStats()
-
-  if (!canManageInvites) {
+  if (!canManage) {
     return (
       <div className="p-6">
         <Card>
@@ -98,117 +103,96 @@ export function InviteManagement({ userRole }: InviteManagementProps) {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1>Employee Invitations</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage invite codes for new employee registration
+          <h2 className="text-2xl font-bold">Employee Invitations</h2>
+          <p className="text-muted-foreground">
+            Manage employee invitation codes and track registration status
           </p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Invite
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Total Invites
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Mail className="h-4 w-4 text-green-500" />
-              Active Invites
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.active}</div>
-            <p className="text-xs text-muted-foreground">Pending registration</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-blue-500" />
-              Used Invites
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.used}</div>
-            <p className="text-xs text-muted-foreground">Successfully registered</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-orange-500" />
-              Expired Invites
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.expired}</div>
-            <p className="text-xs text-muted-foreground">Past expiry date</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Invites Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Invite Codes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search invites..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="used">Used</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-                <SelectItem value="revoked">Revoked</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                {departments.map(dept => (
-                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex items-center border rounded-lg p-1">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="h-8 w-8 p-0"
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+              className="h-8 w-8 p-0"
+            >
+              <List className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* Invites Table */}
-          <div className="border rounded-lg">
+          <Button onClick={openCreateModal} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Invite
+          </Button>
+        </div>
+      </div>
+
+      {/* Statistics */}
+      <InviteStats stats={stats} />
+
+      {/* Filters */}
+      <InviteFilters
+        filters={filters}
+        onFiltersChange={actions.setFilters}
+        onClearFilters={handleClearFilters}
+      />
+
+      {/* Content Display */}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-2" />
+            <p className="text-muted-foreground">Loading invitations...</p>
+          </div>
+        </div>
+      ) : filteredInvites.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">No invitations found</h3>
+            <p className="text-muted-foreground mb-4">
+              {filters.search || filters.status !== 'all' || filters.department !== 'all'
+                ? 'Try adjusting your filters to see more results.'
+                : 'Create your first employee invitation to get started.'
+              }
+            </p>
+            {(!filters.search && filters.status === 'all' && filters.department === 'all') && (
+              <Button onClick={openCreateModal} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create First Invite
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredInvites.map((invite) => (
+            <InviteCard
+              key={invite.id}
+              invite={invite}
+              userRole={userRole}
+              onCopy={handleCopyCode}
+              onRevoke={handleRevokeInvite}
+              onResend={handleResendInvite}
+            />
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -227,7 +211,7 @@ export function InviteManagement({ userRole }: InviteManagementProps) {
                   <TableRow key={invite.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <code className="text-sm bg-muted px-2 py-1 rounded">{invite.code}</code>
+                        <code className="text-sm bg-muted px-2 py-1 rounded font-mono">{invite.code}</code>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -250,8 +234,7 @@ export function InviteManagement({ userRole }: InviteManagementProps) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(invite.status)} className="gap-1">
-                        {getStatusIcon(invite.status)}
+                      <Badge variant={getInviteStatusBadgeVariant(invite.status)}>
                         {invite.status.charAt(0).toUpperCase() + invite.status.slice(1)}
                       </Badge>
                     </TableCell>
@@ -262,7 +245,7 @@ export function InviteManagement({ userRole }: InviteManagementProps) {
                           <div className="text-sm text-muted-foreground">{invite.usedByEmail}</div>
                           {invite.usedAt && (
                             <div className="text-xs text-muted-foreground">
-                              {format(new Date(invite.usedAt), 'MMM dd, yyyy')}
+                              {formatDate(invite.usedAt)}
                             </div>
                           )}
                         </div>
@@ -272,28 +255,49 @@ export function InviteManagement({ userRole }: InviteManagementProps) {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div>{format(new Date(invite.createdAt), 'MMM dd, yyyy')}</div>
+                        <div>{formatDate(invite.createdAt)}</div>
                         <div className="text-muted-foreground">by {invite.createdBy}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {format(new Date(invite.expiresAt), 'MMM dd, yyyy')}
+                        {formatDate(invite.expiresAt)}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyCode(invite.code)}
+                          className="h-8 w-8 p-0"
+                          title="Copy code"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+
                         {invite.status === 'active' && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-1 text-destructive hover:text-destructive"
-                              >
-                                <Ban className="h-3 w-3" />
-                                Revoke
-                              </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleResendInvite(invite.id)}
+                              className="h-8 w-8 p-0"
+                              title="Resend invite"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                  title="Revoke invite"
+                                >
+                                  <Ban className="h-3 w-3" />
+                                </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
@@ -314,6 +318,7 @@ export function InviteManagement({ userRole }: InviteManagementProps) {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
+                          </>
                         )}
                       </div>
                     </TableCell>
@@ -321,17 +326,15 @@ export function InviteManagement({ userRole }: InviteManagementProps) {
                 ))}
               </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Create Invite Modal */}
       <CreateInviteModal
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-        onInviteCreated={(newInvite) => {
-          setInvites(prev => [...prev, newInvite])
-        }}
+        open={modalState.isOpen}
+        onOpenChange={closeModal}
+        onInviteCreated={handleInviteCreated}
         userRole={userRole}
       />
     </div>
