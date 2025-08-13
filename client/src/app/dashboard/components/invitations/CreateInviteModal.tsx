@@ -177,7 +177,7 @@ export function CreateInviteModal({ open, onOpenChange, onInviteCreated, userRol
                                   checked={isCategoryFullySelected(category)}
                                   ref={(ref) => {
                                     if (ref) {
-                                      ref.indeterminate = isCategoryPartiallySelected(category)
+                                      (ref as any).indeterminate = isCategoryPartiallySelected(category)
                                     }
                                   }}
                                   onCheckedChange={() => handleCategoryToggle(category)}
