@@ -1,6 +1,6 @@
-import { Card, CardContent } from '../ui/card'
-import { Progress } from '../ui/progress'
-import { Badge } from '../ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 
 interface KPICardProps {

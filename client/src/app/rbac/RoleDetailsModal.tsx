@@ -192,8 +192,8 @@ export function RoleDetailsModal({ role, open, onOpenChange, onSave }: RoleDetai
                             <Checkbox
                               checked={isCategoryFullySelected(category)}
                               ref={(ref) => {
-                                if (ref) {
-                                  ref.indeterminate = isCategoryPartiallySelected(category)
+                                if (ref && 'indeterminate' in ref) {
+                                  (ref as any).indeterminate = isCategoryPartiallySelected(category)
                                 }
                               }}
                               onCheckedChange={() => handleCategoryToggle(category)}

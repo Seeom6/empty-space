@@ -6,20 +6,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Project } from '../../ProjectManagement'
-
-interface FormData {
-  name: string
-  description: string
-  status: Project['status']
-  priority: Project['priority']
-  progress: number
-  tags: string[]
-  [key: string]: any
-}
+import { ProjectFormData } from '../types'
 
 interface BasicInfoTabProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: ProjectFormData
+  setFormData: React.Dispatch<React.SetStateAction<ProjectFormData>>
   tagInput: string
   setTagInput: (value: string) => void
   addTag: () => void

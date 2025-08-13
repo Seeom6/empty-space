@@ -10,16 +10,11 @@ import { Separator } from '@/components/ui/separator'
 
 const roles = ['Project Manager', 'Senior Developer', 'Developer', 'UI Designer', 'UX Designer', 'QA Engineer', 'DevOps Engineer', 'Data Analyst', 'Security Engineer']
 
-interface FormData {
-  managerId: string
-  teamMembers: Array<{ userId: string; role: string }>
-  selectedTechnologies: string[]
-  [key: string]: any
-}
+import { ProjectFormData } from '../types'
 
 interface TeamTechTabProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: ProjectFormData
+  setFormData: React.Dispatch<React.SetStateAction<ProjectFormData>>
   users: Array<{ id: string; name: string; avatar: string }>
   technologies: string[]
   techInput: string

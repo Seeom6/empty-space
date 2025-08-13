@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Project } from '../../ProjectManagement'
+import { ProjectFormData } from '../types'
 
 interface UseProjectFormProps {
   mode: 'create' | 'edit'
@@ -18,7 +19,7 @@ export function useProjectForm({
   onSave,
   onClose
 }: UseProjectFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     description: '',
     status: 'planning' as Project['status'],

@@ -11,6 +11,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalendarIcon, Search, History, Download, Filter, User, Shield, Settings } from 'lucide-react'
 import { format } from 'date-fns'
+import type { DateRange } from 'react-day-picker'
 import { mockAuditLogs } from './mockData'
 import { AuditLog } from './types'
 
@@ -23,13 +24,7 @@ export function AuditLogsView({ userRole }: AuditLogsViewProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterAction, setFilterAction] = useState('all')
   const [filterTargetType, setFilterTargetType] = useState('all')
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined
-    to: Date | undefined
-  }>({
-    from: undefined,
-    to: undefined
-  })
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 
   const filteredLogs = auditLogs.filter(log => {
     const matchesSearch = log.targetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -206,7 +201,7 @@ export function AuditLogsView({ userRole }: AuditLogsViewProps) {
                 <Calendar
                   mode="range"
                   selected={dateRange}
-                  onSelect={(range) => setDateRange(range || { from: undefined, to: undefined })}
+                  onSelect={setDateRange}
                   numberOfMonths={2}
                 />
               </PopoverContent>

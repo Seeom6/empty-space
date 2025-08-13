@@ -8,19 +8,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 const currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
 
-interface FormData {
-  startDate: Date
-  endDate: Date
-  deadline: Date
-  budget: number
-  currency: string
-  actualSpent: number
-  [key: string]: any
-}
+import { ProjectFormData } from '../types'
 
 interface BudgetTimelineTabProps {
-  formData: FormData
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+  formData: ProjectFormData
+  setFormData: React.Dispatch<React.SetStateAction<ProjectFormData>>
   isStartDateOpen: boolean
   setIsStartDateOpen: (open: boolean) => void
   isEndDateOpen: boolean
