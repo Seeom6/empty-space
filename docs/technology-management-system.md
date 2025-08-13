@@ -39,7 +39,7 @@ This system allows **Admins** and **HR** users to manage technologies within the
 | `documentation_link`| String    | Official documentation link                     |
 | `version`           | String    | Technology version (e.g., v1.0.0)               |
 | `created_by`        | ObjectId  | Admin or HR who created the record              |
-| `users_used`        | [ObjectId]| List of employees using this technology         |
+| `users_used`        | [{ObjectId  , time of user Assigned}]| List of employees using this technology         |
 | `created_at`        | Date      | Creation timestamp                               |
 | `updated_at`        | Date      | Last update timestamp                            |
 
