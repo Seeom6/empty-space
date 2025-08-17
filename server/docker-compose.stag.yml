@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: currency-app-staging
+    container_name: empty-space-app-staging
     build:
       context: .
       target: staging

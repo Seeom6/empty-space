@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: currency-app-development
+    container_name: empty-space-app-development
     build:
       context: .
       target: development

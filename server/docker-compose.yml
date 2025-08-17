@@ -18,7 +18,7 @@ services:
 
     mongodb:
       image: mongo:8.0.9
-      container_name: template_mongodb
+      container_name: empty-space_mongodb
       restart: always
       ports: 
         - "27027:27017"
@@ -49,7 +49,7 @@ services:
         - app-network
     redis:
       image: redis:8.0.2-alpine
-      container_name: template_redis
+      container_name: empty-space_redis
       restart: always
       ports:
         - "6389:6379"

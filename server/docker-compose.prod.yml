@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: currency-app-production
+    container_name: empty-space-app-production
     build:
       context: .
       target: production
