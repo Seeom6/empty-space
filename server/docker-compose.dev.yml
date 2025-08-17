@@ -1,0 +1,20 @@
+services:
+  app:
+    container_name: currency-app-development
+    build:
+      context: .
+      target: development
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./.env
+      - /app/node_modules
+    volumes:
+      - .:/app
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network

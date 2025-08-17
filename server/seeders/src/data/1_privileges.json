@@ -1,0 +1,140 @@
+{
+  "data": [
+    {
+      "_id": "100000000000000000000001",
+      "key": "createRole",
+      "builtInRoleName": {
+        "ar": "إدارة الصلاحيات",
+        "en": "Role Management"
+      },
+      "privilegeActionName": {
+        "ar": "إضافة",
+        "en": "Create"
+      },
+      "privilegeAction": "create",
+      "description": {
+        "en": "Add new user-defined role to the system",
+        "ar": "اضافة دور جديد مخصص الى النظام"
+      }
+    },
+    {
+      "_id": "100000000000000000000002",
+      "key": "viewRole",
+      "builtInRoleName": {
+        "ar": "إدارة الصلاحيات",
+        "en": "Role Management"
+      },
+      "privilegeActionName": {
+        "ar": "عرض",
+        "en": "View"
+      },
+      "privilegeAction": "view",
+      "description": {
+        "en": "View all roles available in the system.",
+        "ar": "عرض جميع الأدوار المتاحة في النظام"
+      }
+    },
+    {
+      "_id": "100000000000000000000003",
+      "key": "updateRole",
+      "builtInRoleName": {
+        "ar": "إدارة الصلاحيات",
+        "en": "Role Management"
+      },
+      "privilegeActionName": {
+        "ar": "تعديل",
+        "en": "Update"
+      },
+      "privilegeAction": "update",
+      "description": {
+        "en": "Update user-defined roles",
+        "ar": "صلاحية تعديل الادوار المخصصة"
+      }
+    },
+    {
+      "_id": "100000000000000000000004",
+      "key": "deleteRole",
+      "builtInRoleName": {
+        "ar": "إدارة الصلاحيات",
+        "en": "Role Management"
+      },
+      "privilegeActionName": {
+        "ar": "حذف",
+        "en": "Delete"
+      },
+      "privilegeAction": "delete",
+      "description": {
+        "en": "delete user-defined roles",
+        "ar": "صلاحية حذف الادوار المخصصة"
+      }
+    },
+    {
+      "_id": "100000000000000000000005",
+      "key": "createOperator",
+      "builtInRoleName": {
+        "ar": "إدارة الموظفين ",
+        "en": "Operators Management"
+      },
+      "privilegeActionName": {
+        "ar": "إضافة",
+        "en": "Create"
+      },
+      "privilegeAction": "create",
+      "description": {
+        "en": "Add new operator permission",
+        "ar": "صلاحية اضافة موظف جديد"
+      }
+    },
+    {
+      "_id": "100000000000000000000006",
+      "key": "viewOperator",
+      "builtInRoleName": {
+        "ar": "إدارة الموظفين ",
+        "en": "Operators Management"
+      },
+      "privilegeActionName": {
+        "ar": "عرض",
+        "en": "View"
+      },
+      "privilegeAction": "view",
+      "description": {
+        "en": "View all operators permission",
+        "ar": "صلاحية عرض جميع الموظفين"
+      }
+    },
+    {
+      "_id": "100000000000000000000007",
+      "key": "updateOperator",
+      "builtInRoleName": {
+        "ar": "إدارة الموظفين ",
+        "en": "Operators Management"
+      },
+      "privilegeActionName": {
+        "ar": "تعديل",
+        "en": "Update"
+      },
+      "privilegeAction": "update",
+      "description": {
+        "en": "Update operator permission",
+        "ar": "صلاحية تعديل الموظفين"
+      }
+    },
+    {
+      "_id": "100000000000000000000008",
+      "key": "deleteOperator",
+      "builtInRoleName": {
+        "ar": "إدارة الموظفين ",
+        "en": "Operators Management"
+      },
+      "privilegeActionName": {
+        "ar": "حذف",
+        "en": "Delete"
+      },
+      "privilegeAction": "delete",
+      "description": {
+        "en": "Delete operator permission",
+        "ar": "صلاحية حذف الموظفين"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+   "data": [
+      {
+         "_id": "300000000000000000000001",
+         "username": "admin",
+         "email": "admin@admin.com",
+         "password": "123456789",
+         "role": "200000000000000000000001",
+         "isActive": true,
+         "accountRole": "super_admin",
+         "changePassword": false,
+         "phoneNumber": "0993845493",
+         "operator": "400000000000000000000001",
+         "fcmTokens": []
+      }
+   ]
+}

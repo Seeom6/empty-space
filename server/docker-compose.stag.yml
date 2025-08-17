@@ -1,0 +1,18 @@
+services:
+  app:
+    container_name: currency-app-staging
+    build:
+      context: .
+      target: staging
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./.env
+    restart: always
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
