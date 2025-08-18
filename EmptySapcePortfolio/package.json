@@ -1,0 +1,58 @@
+{
+  "name": "empty-space-portfolio",
+  "version": "1.0.0",
+  "description": "A modern, elegant portfolio website for Empty Space software development company featuring a clean, minimalistic design with space-themed aesthetics, dark/light mode support, and comprehensive Arabic/English language support.",
+  "private": true,
+  "homepage": "https://github.com/yourusername/empty-space-portfolio",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/empty-space-portfolio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/empty-space-portfolio/issues"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "^14.0.0",
+    "framer-motion": "^10.16.0",
+    "lucide-react": "^0.294.0",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-slot": "^1.0.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.2.0",
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "eslint": "^8.51.0",
+    "eslint-config-next": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "portfolio",
+    "react",
+    "nextjs",
+    "typescript",
+    "tailwindcss",
+    "empty-space"
+  ],
+  "author": "Empty Space",
+  "license": "MIT"
+}
