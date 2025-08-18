@@ -1,0 +1,10 @@
+
+export enum EmployeeStatus {
+    ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE",
+    NOTICE_PERIOD = "NOTICE_PERIOD",
+    LEAVE = "LEAVE",
+    TERMINATED = "TERMINATED",
+    TRANSFER = "TRANSFER",
+    SUSPENDED = "SUSPENDED",
+}

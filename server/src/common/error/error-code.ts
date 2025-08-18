@@ -60,8 +60,20 @@ export enum ErrorCode {
 
   // technology 
   TECHNOLOGY_NOT_FOUND = 90000,
-  TECHNOLOGY_EXIST = 90001
+  TECHNOLOGY_EXIST = 90001,
 
+
+  // department
+  DEPARTMENT_NOT_FOUND = 10000,
+  DEPARTMENT_EXIST = 10001,
+
+  // position
+  POSITION_NOT_FOUND = 11000,
+  POSITION_EXIST = 11001,
+
+  // employee
+  EMPLOYEE_NOT_FOUND = 12000,
+  EMPLOYEE_EXIST = 12001,
 
 
 }

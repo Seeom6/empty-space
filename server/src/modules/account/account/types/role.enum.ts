@@ -4,4 +4,5 @@ export enum AccountRole {
   ADMIN = 'admin',
   OPERATOR = 'operator',
   SUPER_ADMIN = 'super_admin',
+  EMPLOYEE = 'employee'
 }
