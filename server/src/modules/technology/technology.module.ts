@@ -14,7 +14,8 @@ import { CreateTechnologyValidation } from "./api/dto";
         TechnologyError,
         TechnologyRepo,
         CreateTechnologyValidation
-    ]
+    ],
+    exports: [TechnologyServiceAdmin]
 })
 export class TechnologyModule {
 

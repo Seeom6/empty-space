@@ -4,6 +4,7 @@ import { Position, PositionDocument } from "@Modules/position/data";
 import { MongoId } from "@Package/utilities";
 import * as mongoose from "mongoose";
 import { Department, DepartmentDocument } from "@Modules/department/data/department.schema";
+import { Technology, TechnologyDocument } from "@Modules/technology/data/technology.schema";
 
 @Schema()
 export class Employee  implements IEmployee{
@@ -15,7 +16,9 @@ export class Employee  implements IEmployee{
     @Prop({ type: mongoose.Schema.Types.ObjectId, required: true, ref: Position.name })
     position: MongoId | PositionDocument;
     @Prop({ type: String, required: true })
-    employmentType: string
+    employmentType: string;
+    @Prop({ type: [mongoose.Schema.Types.ObjectId], required: true, ref: Technology.name })
+    technologies: MongoId[] | TechnologyDocument[];
     @Prop({ type: Number, required: true })
     baseSalary: number;
 }

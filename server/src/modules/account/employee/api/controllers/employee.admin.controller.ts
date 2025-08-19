@@ -8,6 +8,7 @@ import { CreateEmployeeDto } from "../../api/dto";
 import { UpdateEmployeeDto } from "../../api/dto";
 import { UpdateEmployeePasswordDtoValidator } from "../../api/dto";
 import { UpdateEmployeePasswordDto } from "../../api/dto";
+import { getAllEmployeeDto } from "../dto/response";
 
 @AdminController({
     prefix: "employee",
@@ -19,8 +20,9 @@ export class EmployeeAdminController {
     }
 
     @Get()
-    findAll(){
-        return this.employeeAdminService.findAll();
+    async findAll(){
+        const employees = await this.employeeAdminService.findAll();
+        return getAllEmployeeDto(employees);
     }
 
     @Get("/:id")

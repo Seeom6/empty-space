@@ -10,6 +10,7 @@ const schema = z.object({
     positionId: z.string(),
     employmentType: z.string(),
     baseSalary: z.number(),
+    technologies: z.array(z.string()),
     image: z.string().optional(),
 });
 

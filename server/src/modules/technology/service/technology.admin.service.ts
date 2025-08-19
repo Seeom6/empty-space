@@ -80,4 +80,13 @@ export class TechnologyServiceAdmin {
             status:technologies[0].status
         }
     }
+
+    async findByIds(paramsId: string[]){
+        const technologies = await Promise.all(paramsId.map(async(id) => {
+            const technology = await this.technologyRepo.findOne({filter:{_id:id}});
+            if(!technology) throw this.technologyError.throw(ErrorCode.TECHNOLOGY_NOT_FOUND);
+            return technology;
+        }));
+        return technologies;
+    }
 }

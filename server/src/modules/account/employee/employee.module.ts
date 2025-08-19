@@ -6,11 +6,13 @@ import { EmployeeAdminService } from "./services/employee.admin.service";
 import { EmployeeError } from "./services/employee.error";
 import { CreateEmployeeDtoValidator, UpdateEmployeeDtoValidator, UpdateEmployeePasswordDtoValidator } from "./api/dto";
 import { AccountModule } from "../account/account.module";
+import { TechnologyModule } from "@Modules/technology/technology.module";
 @Module({
     imports:[
         DepartmentModule,
         PositionModule,
-        AccountModule
+        AccountModule,
+        TechnologyModule,
     ],
     controllers:[EmployeeAdminController],
     providers:[

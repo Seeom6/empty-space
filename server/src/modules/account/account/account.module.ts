@@ -25,6 +25,6 @@ import { RedisModule } from "@Infrastructure/cache";
     forwardRef(() => UserModule),
     RedisModule
   ],
-  exports: [AccountOperatorService, AccountService],
+  exports: [AccountOperatorService, AccountService, AccountRepository],
 })
 export class AccountModule {}

@@ -9,35 +9,58 @@ import { DepartmentAdminService } from "@Modules/department/services/department.
 import { PositionAdminService } from "@Modules/position/services/position.admin.service";
 import { Employee } from "@Modules/account/account/data/schemas/employee.schems";
 import { AccountRole } from "@Modules/account/account/types/role.enum";
+import { Injectable } from "@nestjs/common";
+import { TechnologyServiceAdmin } from "@Modules/technology/service";
+import { AccountDocument } from "@Modules/account/account/data";
 
-
+@Injectable()
 export class EmployeeAdminService {
     constructor(
         private readonly accountRepo: AccountRepository,
         private readonly departmentService: DepartmentAdminService,
         private readonly positionService: PositionAdminService,
+        private readonly technologyService: TechnologyServiceAdmin,
         private readonly employeeError: EmployeeError,
     ){
     }
 
-    async findAll(){
-        const employees = await this.accountRepo.find({filter:{type:AccountRole.EMPLOYEE,isDeleted:false}});
+    async findAll(): Promise<AccountDocument[]> {
+        const employees = await this.accountRepo.find(
+            {
+                filter:{accountRole:AccountRole.EMPLOYEE},
+                options:{populate:[
+                    {
+                        path:"employee.department",
+                    },
+                    {
+                        path:"employee.position",
+                    },
+                    {
+                        path:"employee.technologies",
+                    }
+                ]}
+            }
+        );
         return employees;
     }
 
     async findOne(paramsId: IParamsId){
-        return await this.accountRepo.findOne({filter:{_id:paramsId.id,type:AccountRole.EMPLOYEE,isDeleted:false}});
+        return await this.accountRepo.findOne({filter:{_id:paramsId.id,accountRole:AccountRole.EMPLOYEE}});
     }
 
     async create(body: CreateEmployeeDto){
-        const isExist = await this.accountRepo.findOne({filter:{email:body.email}});
+        const [department, position, technologies, isExist] = await Promise.all([
+            this.departmentService.findOne({id:body.departmentId}),
+            this.positionService.findOne({id:body.positionId}),
+            this.technologyService.findByIds(body.technologies),
+            this.accountRepo.findOne({filter:{email:body.email}}),
+        ])
         if(isExist) throw this.employeeError.throw(ErrorCode.EMPLOYEE_EXIST);
-        const department = await this.departmentService.findOne({id:body.departmentId});
-        const position = await this.positionService.findOne({id:body.positionId});
         const employee: Employee = {
             image: body.image,
             department,
             position,
+            technologies,
             employmentType: body.employmentType,
             baseSalary: body.baseSalary,
         }
@@ -47,12 +70,13 @@ export class EmployeeAdminService {
             firstName: body.firstName,
             lastName: body.lastName,
             phoneNumber: body.phoneNumber,
-            accountRole: AccountRole.ADMIN,
+            accountRole: AccountRole.EMPLOYEE,
             employee,
             isActive: true,
             isVerified: true,
         }
-        await this.accountRepo.create({doc:{...body, status: EmployeeStatus.ACTIVE, employee} as any});
+
+        await this.accountRepo.create({doc:{...account, status: EmployeeStatus.ACTIVE} as any});
         return;
     }
 
@@ -64,10 +88,12 @@ export class EmployeeAdminService {
         }
         const department = await this.departmentService.findOne({id:body.departmentId});
         const position = await this.positionService.findOne({id:body.positionId});
+        const technologies = await this.technologyService.findByIds(body.technologies);
         const employee: Employee = {
             image: body.image,
             department,
             position,
+            technologies,
             employmentType: body.employmentType,
             baseSalary: body.baseSalary,
         }

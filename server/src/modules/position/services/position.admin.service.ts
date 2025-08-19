@@ -23,15 +23,19 @@ export class PositionAdminService {
     }
 
     async findOne(paramsId: IParamsId){
-        return await this.positionRepo.findOne({filter:{_id:paramsId.id,isDeleted:false}});
+        return await this.positionRepo.findOne(
+            {filter:{_id:paramsId.id,isDeleted:false}, 
+            options:{populate:{path:"departmentId",select:"name"}},
+            error:this.positionError.error(ErrorCode.DEPARTMENT_NOT_FOUND)
+            });
     }
 
     async create(body: CreatePositionDto){
-        const department = await this.departmentService.findOne({id:body.departmentId});
+        await this.departmentService.findOne({id:body.departmentId});
         const isExist = await this.positionRepo.findOne({filter:{name:body.name}});
         if(isExist) throw this.positionError.throw(ErrorCode.POSITION_EXIST);
         const doc = await this.positionRepo.create({doc:{...body, status: PositionStatus.ACTIVE} as any});
-        return doc;
+        return ;
     }
 
     async update(paramsId: IParamsId, body: UpdatePositionDto){

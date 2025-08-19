@@ -5,6 +5,7 @@ import { CreateDepartmentDto } from "@Modules/department/api/dto";
 import { UpdateDepartmentDto } from "@Modules/department/api/dto";
 import { CreateDepartmentDtoValidator } from "@Modules/department/api/dto";
 import { UpdateDepartmentDtoValidator } from "@Modules/department/api/dto";
+import { getAllDepartmentDto } from "../dto/response";
 
 @AdminController({
     prefix : "department",
@@ -16,27 +17,30 @@ export class DepartmentAdminController {
     }
 
     @Get()
-    findAll(){
-        return this.departmentAdminService.findAll();
+    async findAll(){
+        const departments = await this.departmentAdminService.findAll();
+        return getAllDepartmentDto(departments);
     }
 
     @Get("/:id")
-    findOne(@Param("id") id: string){
-        return this.departmentAdminService.findOne({id});
+    async findOne(@Param("id") id: string){
+        const department = await this.departmentAdminService.findOne({id});
+        return department
     }
 
     @Post()
-    create(@Body(CreateDepartmentDtoValidator) body: CreateDepartmentDto){
+    async create(@Body(CreateDepartmentDtoValidator) body: CreateDepartmentDto){
         return this.departmentAdminService.create(body);
     }
 
     @Put("/:id")
-    update(@Param("id") id: string, @Body(UpdateDepartmentDtoValidator) body: UpdateDepartmentDto){
-        return this.departmentAdminService.update({id}, body);
+    async update(@Param("id") id: string, @Body(UpdateDepartmentDtoValidator) body: UpdateDepartmentDto){
+        await this.departmentAdminService.update({id}, body);
+        return
     }
 
     @Delete("/:id")
-    remove(@Param("id") id: string){
+    async remove(@Param("id") id: string){
         return this.departmentAdminService.remove({id});
     }
 }

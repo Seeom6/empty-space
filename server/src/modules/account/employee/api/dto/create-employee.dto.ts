@@ -1,5 +1,6 @@
 import z from "zod";
 import { zodValidationPipeFactory } from "@Package/api";
+import { EmploymentType } from "../../types";
 
 const schema = z.object({
     firstName: z.string().min(3).max(255),
@@ -9,8 +10,9 @@ const schema = z.object({
     password: z.string().min(3).max(255),
     departmentId: z.string(),
     positionId: z.string(),
-    employmentType: z.string(),
+    employmentType: z.enum(Object.values(EmploymentType)),
     baseSalary: z.number(),
+    technologies: z.array(z.string()),
     image: z.string().optional(),
 });
 

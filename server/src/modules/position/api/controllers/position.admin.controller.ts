@@ -5,6 +5,8 @@ import { CreatePositionDtoValidator } from "@Modules/position/api/dto";
 import { UpdatePositionDtoValidator } from "@Modules/position/api/dto";
 import { CreatePositionDto } from "@Modules/position/api/dto";
 import { UpdatePositionDto } from "@Modules/position/api/dto";
+import { getAllPositionDto } from "../dto/response/get-all.dto";
+import { getPositionDto } from "../dto/response/get-position.dto";
 
 @AdminController({
     prefix : "position",
@@ -16,13 +18,15 @@ export class PositionAdminController {
     }
 
     @Get()
-    findAll(){
-        return this.positionAdminService.findAll();
+    async findAll(){
+        const positions = await this.positionAdminService.findAll();
+        return getAllPositionDto(positions);
     }
 
     @Get("/:id")
-    findOne(@Param("id") id: string){
-        return this.positionAdminService.findOne({id});
+    async findOne(@Param("id") id: string){
+        const position = await this.positionAdminService.findOne({id});
+        return getPositionDto(position);
     }
 
     @Post()
