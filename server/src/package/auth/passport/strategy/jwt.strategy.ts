@@ -8,7 +8,7 @@ import { StrategyConstant } from "./strategy.constant";
 import { RedisService } from "@Infrastructure/cache";
 import { EnvironmentService } from "@Infrastructure/config";
 import { AppError } from "@Package/error";
-import { ErrorCode } from "../../../../common/error/error-code";
+import { ErrorCode } from "@Common/error";
 @Injectable()
 export class JwtStrategy extends PassportStrategy(
   Strategy,
@@ -22,7 +22,11 @@ export class JwtStrategy extends PassportStrategy(
   ) {
     const secretKey = environmentService.get('jwt.jwtAccessSecret');
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req: Request) => {
+          return req?.cookies["accessToken"]
+        },
+      ]),
       ignoreExpiration: false,
       secretOrKey: secretKey,
       passReqToCallback: true,
