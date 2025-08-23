@@ -161,16 +161,17 @@ export const debounce = <T extends (...args: any[]) => any>(
 }
 
 // Permission Utilities
+// According to API documentation, all technology operations require SUPER_ADMIN role
 export const canManageTechnologies = (userRole: string): boolean => {
-  return userRole === 'Admin' || userRole === 'HR'
+  return userRole === 'SUPER_ADMIN'
 }
 
 export const canEditTechnology = (userRole: string, technology: Technology): boolean => {
-  return canManageTechnologies(userRole) || technology.createdBy === userRole
+  return canManageTechnologies(userRole)
 }
 
 export const canDeleteTechnology = (userRole: string, technology: Technology): boolean => {
-  return userRole === 'Admin' || technology.createdBy === userRole
+  return canManageTechnologies(userRole)
 }
 
 // ID Generation Utility
