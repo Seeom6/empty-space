@@ -18,6 +18,7 @@ import { EnvironmentService } from '@Infrastructure/config';
                 const uri = username && password
                     ? `mongodb://${username}:${password}@${host}:${port}/${database}?authSource=admin&replicaSet=rs0`
                     : `mongodb://${host}:${port}/${database}`;
+                // const uri = "mongodb+srv://Mohammed:lh5rIOFSL8J2ul4c@cluster0.dlowkh9.mongodb.net/"
 
                 // const uri = `mongodb://127.0.0.1:27027/silla_link`;
                 // const uri = `mongodb://${host}:27017/${database}`;

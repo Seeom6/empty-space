@@ -1,6 +1,6 @@
 import {applyDecorators, Delete, Get, Patch, Post, Put} from "@nestjs/common";
 import { AllowRole } from "@Package/api";
-import { AccountRole } from "seeders/dist/schemas/account.shcema";
+import { AccountRole } from "seeders/src/schemas/account.shcema";
 
 export function PostPolicy(options: { path: string; role: AccountRole[]}){
   return applyDecorators(
