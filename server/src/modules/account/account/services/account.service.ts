@@ -247,7 +247,8 @@ export class AccountService {
 
   async createAccount(body: SingInDto, options?: {session?: ClientSession,}) {
     const result = await this.accountRepository.create({
-      doc: {        password: body.password,
+      doc: {        
+        password: body.password,
         accountRole: body.accountRole as AccountRole || AccountRole.USER,
         phoneNumber: body.phoneNumber,
         isActive: true,

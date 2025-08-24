@@ -68,6 +68,9 @@ export class Account {
 
   @Prop({ type: Boolean, default: true })
   isVerified?: boolean;
+
+  @Prop({ type: Date, default: null })
+  birthday?: Date;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

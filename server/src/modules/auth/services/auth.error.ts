@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { IServiceError } from '@Package/error/service.error.interface';
 import { ErrorCode } from '@Common/error/error-code';
 
-export const AuthErrorMessages = {
-  [ErrorCode.USER_ALREADY_EXISTS]: 'User already exists',
+const AuthErrorMessages = {
+  [ErrorCode.USER_ALREADY_EXISTS]: 'Account already exists',
   [ErrorCode.OTP_EXPIRED]: 'OTP expired or not found',
   [ErrorCode.INVALID_OTP]: 'Invalid OTP',
   [ErrorCode.OTP_VERIFICATION_FAILED]: 'Failed to verify OTP',

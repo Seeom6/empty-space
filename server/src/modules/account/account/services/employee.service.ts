@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { AccountRepository, IAccount } from "../data";
 import { AccountRole } from "../types/role.enum";
+import { EmployeeStatus } from "@Modules/account/employee/types";
 
-4
 @Injectable()
 export class EmployeeService {
 
@@ -17,7 +17,8 @@ export class EmployeeService {
                 password:account.password,
                 accountRole: AccountRole.ADMIN,
                 employee: {
-                    ...account.employee
+                    ...account.employee,
+                    status: EmployeeStatus.ACTIVE,
                 }
             }
         })

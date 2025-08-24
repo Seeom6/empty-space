@@ -5,11 +5,10 @@ import { TechnologyDocument } from "@Modules/technology/data";
 
 export interface IEmployee {
 
-    image: string;
+    image?: string;
     department: MongoId | DepartmentDocument;
     position: MongoId | PositionDocument;
     technologies: MongoId[] | TechnologyDocument[];
     employmentType: string
-
-    baseSalary: number;
+    baseSalary?: number;
 }

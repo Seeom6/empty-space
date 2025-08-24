@@ -77,5 +77,6 @@ export enum ErrorCode {
   EMPLOYEE_NOT_FOUND = 12000,
   EMPLOYEE_EXIST = 12001,
 
-
+  // invite code
+  INVITE_CODE_NOT_FOUND = 13000
 }

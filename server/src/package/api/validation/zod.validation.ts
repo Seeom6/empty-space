@@ -20,10 +20,10 @@ const isPassword = z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?
 
 const pagination = () => {
     return {
-      needPagination: z.boolean(),
-      page: z.number().min(0),
-      limit: z.number().min(1),
-      total: z.number().min(1),
+      needPagination: z.coerce.boolean(),
+      page: z.coerce.number().min(0),
+      limit: z.coerce.number().min(1),
+      total: z.coerce.boolean().optional(),
     };
 };
 

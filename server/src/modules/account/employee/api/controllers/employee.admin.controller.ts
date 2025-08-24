@@ -1,4 +1,4 @@
-import { Get, Post, Put, Delete } from "@nestjs/common";
+import { Get, Post, Put, Delete, Query } from "@nestjs/common";
 import { AdminController } from "@Package/api";
 import { Param, Body } from "@nestjs/common";
 import { EmployeeAdminService } from "../../services/employee.admin.service";
@@ -9,6 +9,9 @@ import { UpdateEmployeeDto } from "../../api/dto";
 import { UpdateEmployeePasswordDtoValidator } from "../../api/dto";
 import { UpdateEmployeePasswordDto } from "../../api/dto";
 import { getAllEmployeeDto } from "../dto/response";
+import { GetAllEmployeeDto, GetAllEmployeeDtoValidator } from "../dto/get-all-employee.dto";
+import { queryParser } from "@Package/api";
+import { getEmployeeByIdDto } from "../dto/response/get-employee-by-id.dto";
 
 @AdminController({
     prefix: "employee",
@@ -20,14 +23,19 @@ export class EmployeeAdminController {
     }
 
     @Get()
-    async findAll(){
-        const employees = await this.employeeAdminService.findAll();
-        return getAllEmployeeDto(employees);
+    async findAll(@Query(GetAllEmployeeDtoValidator) query: GetAllEmployeeDto){
+        const {pagination, myQuery } = queryParser(query)
+        const employees = await this.employeeAdminService.findAll(pagination, myQuery);
+        return {
+            totalCount: employees.totalCount,
+            data: getAllEmployeeDto(employees.data)
+        }
     }
 
     @Get("/:id")
-    findOne(@Param("id") id: string){
-        return this.employeeAdminService.findOne({id});
+    async findOne(@Param("id") id: string){
+        const employee = await this.employeeAdminService.findOne({id});
+        return getEmployeeByIdDto(employee);
     }
 
     @Post()

@@ -14,6 +14,7 @@ const schema = z.object({
     baseSalary: z.number(),
     technologies: z.array(z.string()),
     image: z.string().optional(),
+    birthday: z.date().optional(),
 });
 
 export type CreateEmployeeDto = z.infer<typeof schema>;

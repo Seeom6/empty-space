@@ -1,6 +1,6 @@
 import { Account, AccountRepository } from "@Modules/account/account/data";
 import { EmployeeError } from "./employee.error";
-import { IParamsId } from "@Package/api";
+import { IParamsId, Pagination, QueryValue } from "@Package/api";
 import { UpdateEmployeeDto, UpdateEmployeePasswordDto } from "../api/dto";
 import { EmployeeStatus } from "../types/employee-status.type";
 import { ErrorCode } from "@Common/error";
@@ -12,6 +12,7 @@ import { AccountRole } from "@Modules/account/account/types/role.enum";
 import { Injectable } from "@nestjs/common";
 import { TechnologyServiceAdmin } from "@Modules/technology/service";
 import { AccountDocument } from "@Modules/account/account/data";
+import { GetAllEmployeeDto } from "../api/dto/get-all-employee.dto";
 
 @Injectable()
 export class EmployeeAdminService {
@@ -20,42 +21,138 @@ export class EmployeeAdminService {
         private readonly departmentService: DepartmentAdminService,
         private readonly positionService: PositionAdminService,
         private readonly technologyService: TechnologyServiceAdmin,
-        private readonly employeeError: EmployeeError,
-    ){
-    }
+        private readonly employeeError: EmployeeError
+    ) { }
 
-    async findAll(): Promise<AccountDocument[]> {
-        const employees = await this.accountRepo.find(
-            {
-                filter:{accountRole:AccountRole.EMPLOYEE},
-                options:{populate:[
-                    {
-                        path:"employee.department",
-                    },
-                    {
-                        path:"employee.position",
-                    },
-                    {
-                        path:"employee.technologies",
+    async findAll(
+        pagination: Pagination,
+        myQuery: QueryValue<GetAllEmployeeDto>
+    ): Promise<{totalCount: number, data: AccountDocument[]}> {
+        const filter:any = {}
+        if(myQuery.searchValue){
+            filter.$or = [
+                { firstName: { $regex: myQuery.searchValue, $options: "i" } },
+                { lastName: { $regex: myQuery.searchValue, $options: "i" } },
+                { email: { $regex: myQuery.searchValue, $options: "i" } },
+                { phoneNumber: { $regex: myQuery.searchValue, $options: "i" } },
+            ];
+        }
+        if(myQuery.department){
+            filter.department = myQuery.department;
+        }
+        if(myQuery.position){
+            filter.position = myQuery.position;
+        }
+        if(myQuery.employmentType){
+            filter.employmentType = myQuery.employmentType;
+        }
+        if(myQuery.status){
+            filter.status = myQuery.status;
+        }
+        const employees = await this.accountRepo.aggregate({
+            pipeline: [
+                {
+                    $match: {
+                        accountRole: AccountRole.EMPLOYEE,
+                        // isDeleted: false,
                     }
-                ]}
-            }
-        );
-        return employees;
+                },
+                {
+                    $lookup: {
+                        from: "departments",
+                        localField: "employee.department",
+                        foreignField: "_id",
+                        as: "department",
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "technologies",
+                        localField: "employee.technologies",
+                        foreignField: "_id",
+                        as: "technologies",
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "positions",
+                        localField: "employee.position",
+                        foreignField: "_id",
+                        as: "position",
+                    }
+                },
+                {
+                    $addFields: {
+                        department: {
+                            $arrayElemAt: ["$department", 0],
+                        },
+                        position: {
+                            $arrayElemAt: ["$position", 0],
+                        },
+                        technologies: "$technologies",
+                    },
+                },
+                {
+                    $match: filter,
+                },
+                {
+                    $facet: {
+                        totalCount: [
+                            {
+                                $count: "totalCount",
+                            },
+                        ],
+                        data: [
+                            {
+                                $skip: pagination.skip,
+                            },
+                            {
+                                $limit: pagination.limit,
+                            },
+                        ],
+                    },
+                },
+            ],
+        });
+        const totalCount = employees[0]?.totalCount[0]?.totalCount || 0;
+        const data = employees[0]?.data || [];
+        return {totalCount, data};
     }
 
-    async findOne(paramsId: IParamsId){
-        return await this.accountRepo.findOne({filter:{_id:paramsId.id,accountRole:AccountRole.EMPLOYEE}});
+    async findOne(paramsId: IParamsId) {
+        return await this.accountRepo.findOne({
+            filter: { _id: paramsId.id, accountRole: AccountRole.EMPLOYEE },
+            options: {
+                populate: [
+                    {
+                        path: "employee.department",
+                        model: "Department",
+                        select: "name",
+                    },
+                    {
+                        path: "employee.position",
+                        model: "Position",
+                        select: "name",
+                    },
+                    {
+                        path: "employee.technologies",
+                        model: "Technology",
+                        select: "name",
+                    },
+                ],
+            },
+            error: this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND),
+        });
     }
 
-    async create(body: CreateEmployeeDto){
+    async create(body: CreateEmployeeDto) {
         const [department, position, technologies, isExist] = await Promise.all([
-            this.departmentService.findOne({id:body.departmentId}),
-            this.positionService.findOne({id:body.positionId}),
+            this.departmentService.findOne({ id: body.departmentId }),
+            this.positionService.findOne({ id: body.positionId }),
             this.technologyService.findByIds(body.technologies),
-            this.accountRepo.findOne({filter:{email:body.email}}),
-        ])
-        if(isExist) throw this.employeeError.throw(ErrorCode.EMPLOYEE_EXIST);
+            this.accountRepo.findOne({ filter: { email: body.email } }),
+        ]);
+        if (isExist) throw this.employeeError.throw(ErrorCode.EMPLOYEE_EXIST);
         const employee: Employee = {
             image: body.image,
             department,
@@ -63,7 +160,9 @@ export class EmployeeAdminService {
             technologies,
             employmentType: body.employmentType,
             baseSalary: body.baseSalary,
-        }
+            status: EmployeeStatus.ACTIVE,
+            hireDate: new Date(),
+        };
         const account: Account = {
             email: body.email,
             password: body.password,
@@ -74,21 +173,43 @@ export class EmployeeAdminService {
             employee,
             isActive: true,
             isVerified: true,
-        }
+            birthday: body.birthday,
+        };
 
-        await this.accountRepo.create({doc:{...account, status: EmployeeStatus.ACTIVE} as any});
+        await this.accountRepo.create({
+            doc: { ...account, status: EmployeeStatus.ACTIVE } as any,
+        });
         return;
     }
 
-    async update(paramsId: IParamsId, body: UpdateEmployeeDto){
-        const doc = await this.accountRepo.findOne({filter:{_id:paramsId.id,type:AccountRole.EMPLOYEE,isDeleted:false}, error:this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND)});
-        if(doc.email !== body.email){
-            const isExist = await this.accountRepo.findOne({filter:{email:body.email,type:AccountRole.EMPLOYEE,isDeleted:false}});
-            if(isExist) throw this.employeeError.throw(ErrorCode.EMPLOYEE_EXIST);
+    async update(paramsId: IParamsId, body: UpdateEmployeeDto) {
+        const doc = await this.accountRepo.findOne({
+            filter: {
+                _id: paramsId.id,
+                type: AccountRole.EMPLOYEE,
+                isDeleted: false,
+            },
+            error: this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND),
+        });
+        if (doc.email !== body.email) {
+            const isExist = await this.accountRepo.findOne({
+                filter: {
+                    email: body.email,
+                    type: AccountRole.EMPLOYEE,
+                    isDeleted: false,
+                },
+            });
+            if (isExist) throw this.employeeError.throw(ErrorCode.EMPLOYEE_EXIST);
         }
-        const department = await this.departmentService.findOne({id:body.departmentId});
-        const position = await this.positionService.findOne({id:body.positionId});
-        const technologies = await this.technologyService.findByIds(body.technologies);
+        const department = await this.departmentService.findOne({
+            id: body.departmentId,
+        });
+        const position = await this.positionService.findOne({
+            id: body.positionId,
+        });
+        const technologies = await this.technologyService.findByIds(
+            body.technologies
+        );
         const employee: Employee = {
             image: body.image,
             department,
@@ -96,21 +217,46 @@ export class EmployeeAdminService {
             technologies,
             employmentType: body.employmentType,
             baseSalary: body.baseSalary,
-        }
+            status: EmployeeStatus.ACTIVE,
+        };
         doc.employee = employee;
         doc.email = body.email;
         doc.phoneNumber = body.phoneNumber;
         doc.firstName = body.firstName;
         doc.lastName = body.lastName;
         doc.image = body.image;
-        return await this.accountRepo.findOneAndUpdate({filter:{_id:paramsId.id,type:AccountRole.EMPLOYEE,isDeleted:false},update:{...body, employee} as any, error:this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND)});
+        return await this.accountRepo.findOneAndUpdate({
+            filter: {
+                _id: paramsId.id,
+                type: AccountRole.EMPLOYEE,
+                isDeleted: false,
+            },
+            update: { ...body, employee } as any,
+            error: this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND),
+        });
     }
 
-    async remove(paramsId: IParamsId){
-        return await this.accountRepo.findOneAndUpdate({filter:{_id:paramsId.id,type:AccountRole.EMPLOYEE,isDeleted:false},update:{isDeleted:true} as any, error:this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND)});
+    async remove(paramsId: IParamsId) {
+        return await this.accountRepo.findOneAndUpdate({
+            filter: {
+                _id: paramsId.id,
+                type: AccountRole.EMPLOYEE,
+                isDeleted: false,
+            },
+            update: { isDeleted: true } as any,
+            error: this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND),
+        });
     }
 
-    async updatePassword(paramsId: IParamsId, body: UpdateEmployeePasswordDto){
-        return await this.accountRepo.findOneAndUpdate({filter:{_id:paramsId.id,type:AccountRole.EMPLOYEE,isDeleted:false},update:{password:body.password} as any, error:this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND)});
+    async updatePassword(paramsId: IParamsId, body: UpdateEmployeePasswordDto) {
+        return await this.accountRepo.findOneAndUpdate({
+            filter: {
+                _id: paramsId.id,
+                type: AccountRole.EMPLOYEE,
+                isDeleted: false,
+            },
+            update: { password: body.password } as any,
+            error: this.employeeError.error(ErrorCode.EMPLOYEE_NOT_FOUND),
+        });
     }
 }
