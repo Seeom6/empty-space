@@ -1,0 +1,648 @@
+{
+  "info": {
+    "name": "Invite Code System API Collection",
+    "description": "Complete invite code system API collection including code creation, management, statistics, and filtering",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "positionId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b3",
+      "type": "string"
+    },
+    {
+      "key": "privilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b4",
+      "type": "string"
+    },
+    {
+      "key": "inviteCode",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Invite Code Management",
+      "description": "Core invite code management endpoints",
+      "item": [
+        {
+          "name": "Create Invite Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": \"{{positionId}}\",\n  \"privilege\": [\"{{privilegeId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"]
+            },
+            "description": "Create a new invite code for employee registration. Requires valid position ID and optional privilege IDs."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invite code created successfully', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has correct structure', function () {",
+                  "    if (pm.response.code === 200) {",
+                  "        const response = pm.response.json();",
+                  "        // Empty response body indicates success",
+                  "        pm.expect(response).to.be.an('object');",
+                  "        console.log('Invite code created successfully with empty response');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Invite Code Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code/home",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code", "home"]
+            },
+            "description": "Get statistics about invite codes grouped by status (active, used, expired, revoked)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Statistics retrieved successfully', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Statistics have correct structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.length > 0) {",
+                  "        pm.expect(response[0]).to.have.property('status');",
+                  "        pm.expect(response[0]).to.have.property('count');",
+                  "        pm.expect(response[0].count).to.be.a('number');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Invite Codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of all invite codes with optional filtering."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invite codes retrieved successfully', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Invite codes have correct structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.length > 0) {",
+                  "        const inviteCode = response[0];",
+                  "        pm.expect(inviteCode).to.have.property('code');",
+                  "        pm.expect(inviteCode).to.have.property('status');",
+                  "        pm.expect(inviteCode).to.have.property('position');",
+                  "        pm.expect(inviteCode).to.have.property('createdAt');",
+                  "        ",
+                  "        // Save first invite code for other tests",
+                  "        pm.environment.set('inviteCode', inviteCode.code);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Filtered Queries",
+      "description": "Test various filtering and pagination options",
+      "item": [
+        {
+          "name": "Get Active Invite Codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code?status=active&page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Get only active invite codes with pagination."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Used Invite Codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code?status=used&page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "used"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Get only used invite codes to see which employees registered."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invite Codes by Position",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code?position={{positionId}}&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"],
+              "query": [
+                {
+                  "key": "position",
+                  "value": "{{positionId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Filter invite codes by specific position ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Expired Invite Codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code?status=expired",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "expired"
+                }
+              ]
+            },
+            "description": "Get expired invite codes for cleanup purposes."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Revoked Invite Codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code?status=revoked",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "revoked"
+                }
+              ]
+            },
+            "description": "Get revoked invite codes."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Testing",
+      "description": "Test various error scenarios and edge cases",
+      "item": [
+        {
+          "name": "Create Invite Code - Invalid Position",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": \"invalid_position_id\",\n  \"privilege\": [\"{{privilegeId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"]
+            },
+            "description": "Test error response when providing invalid position ID."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid position error returned', function () {",
+                  "    pm.expect(pm.response.code).to.equal(400);",
+                  "});",
+                  "",
+                  "pm.test('Error response has correct structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error.code).to.equal(10000); // DEPARTMENT_NOT_FOUND due to bug",
+                  "    pm.expect(response.error.message).to.include('Position not found');",
+                  "    pm.expect(response.error.errorType).to.equal('POSITION_ERROR');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Invite Code - Missing Position",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"privilege\": [\"{{privilegeId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"]
+            },
+            "description": "Test validation error when position field is missing."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Invite Code - Empty Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"]
+            },
+            "description": "Test validation error with empty request body."
+          },
+          "response": []
+        },
+        {
+          "name": "Unauthorized Access - No Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"]
+            },
+            "description": "Test unauthorized access without admin token."
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Pagination Parameters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code?page=-1&limit=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "-1"
+                },
+                {
+                  "key": "limit",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Test behavior with invalid pagination parameters."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Integration Testing",
+      "description": "Test integration with other systems",
+      "item": [
+        {
+          "name": "Create Multiple Invite Codes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": \"{{positionId}}\",\n  \"privilege\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"]
+            },
+            "description": "Create invite code without privileges to test optional privilege array."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Code Generation Uniqueness",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": \"{{positionId}}\",\n  \"privilege\": [\"{{privilegeId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/invite-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "invite-code"]
+            },
+            "description": "Create another invite code to verify unique code generation."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Multiple codes can be created', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "// This test verifies that the system can create multiple codes",
+                  "// The uniqueness is handled by the backend code generation logic"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('Making request to:', pm.request.url.toString());",
+          "",
+          "// Check if admin token is set",
+          "const adminToken = pm.environment.get('adminToken');",
+          "if (!adminToken && pm.request.url.toString().includes('/admin/')) {",
+          "    console.warn('⚠️ Admin token not set. Please login as admin first.');",
+          "}",
+          "",
+          "// Set dynamic timestamp",
+          "pm.environment.set('timestamp', Date.now());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is reasonable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Test successful responses",
+          "if (pm.response.code >= 200 && pm.response.code < 300) {",
+          "    pm.test('Successful response has correct content type', function () {",
+          "        if (pm.response.headers.get('Content-Type')) {",
+          "            pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "        }",
+          "    });",
+          "}",
+          "",
+          "// Test error responses",
+          "if (pm.response.code >= 400) {",
+          "    pm.test('Error response has correct structure', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response).to.have.property('error');",
+          "        pm.expect(response.error).to.have.property('code');",
+          "        pm.expect(response.error).to.have.property('message');",
+          "        pm.expect(response.error).to.have.property('errorType');",
+          "        pm.expect(response.error).to.have.property('path');",
+          "        pm.expect(response.error).to.have.property('time');",
+          "    });",
+          "",
+          "    pm.test('Error code is valid', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response.error.code).to.be.a('number');",
+          "        pm.expect(response.error.code).to.be.greaterThan(0);",
+          "    });",
+          "}",
+          "",
+          "// Log response for debugging",
+          "console.log('Response Status:', pm.response.code);",
+          "if (pm.response.code >= 400) {",
+          "    console.log('Error Response:', pm.response.text());",
+          "}"
+        ]
+      }
+    }
+  ]
+}

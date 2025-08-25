@@ -1,0 +1,91 @@
+{
+  "id": "privilege-api-environment",
+  "name": "Privilege System API Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the privilege system API",
+      "enabled": true
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "description": "Admin JWT access token with privilege management permissions",
+      "enabled": true
+    },
+    {
+      "key": "userToken",
+      "value": "",
+      "description": "Regular user token for testing insufficient privileges",
+      "enabled": true
+    },
+    {
+      "key": "privilegeId",
+      "value": "",
+      "description": "Sample privilege ID extracted from API responses",
+      "enabled": true
+    },
+    {
+      "key": "roleId",
+      "value": "",
+      "description": "Role ID for testing role-privilege integration",
+      "enabled": true
+    },
+    {
+      "key": "timestamp",
+      "value": "",
+      "description": "Dynamic timestamp for unique data generation",
+      "enabled": true
+    },
+    {
+      "key": "createRolePrivilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b1",
+      "description": "Create Role privilege ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "viewRolePrivilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b2",
+      "description": "View Role privilege ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "updateRolePrivilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b3",
+      "description": "Update Role privilege ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "deleteRolePrivilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b4",
+      "description": "Delete Role privilege ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "createOperatorPrivilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b5",
+      "description": "Create Operator privilege ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "viewOperatorPrivilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b6",
+      "description": "View Operator privilege ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "updateOperatorPrivilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b7",
+      "description": "Update Operator privilege ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "deleteOperatorPrivilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b8",
+      "description": "Delete Operator privilege ID for testing",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

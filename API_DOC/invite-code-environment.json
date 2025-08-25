@@ -1,0 +1,67 @@
+{
+  "id": "invite-code-environment",
+  "name": "Invite Code API Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the invite code API",
+      "enabled": true
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "description": "Admin JWT access token for authenticated requests",
+      "enabled": true
+    },
+    {
+      "key": "positionId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b3",
+      "description": "Valid position ID for creating invite codes",
+      "enabled": true
+    },
+    {
+      "key": "privilegeId",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b4",
+      "description": "Valid privilege ID for invite code privileges",
+      "enabled": true
+    },
+    {
+      "key": "inviteCode",
+      "value": "",
+      "description": "Generated invite code from API responses",
+      "enabled": true
+    },
+    {
+      "key": "timestamp",
+      "value": "",
+      "description": "Dynamic timestamp for unique data generation",
+      "enabled": true
+    },
+    {
+      "key": "testPositionId1",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b5",
+      "description": "Alternative position ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "testPositionId2",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b6",
+      "description": "Second alternative position ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "testPrivilegeId1",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b7",
+      "description": "Alternative privilege ID for testing",
+      "enabled": true
+    },
+    {
+      "key": "testPrivilegeId2",
+      "value": "60f7b3b3b3b3b3b3b3b3b3b8",
+      "description": "Second alternative privilege ID for testing",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

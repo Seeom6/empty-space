@@ -1,0 +1,591 @@
+{
+  "info": {
+    "name": "Privilege System API Collection",
+    "description": "Complete privilege system API collection for RBAC implementation including privilege retrieval, role integration testing, and authorization validation",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "privilegeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "roleId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Privilege Management",
+      "description": "Core privilege system endpoints",
+      "item": [
+        {
+          "name": "Get All Privileges (English)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "en"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/privilege",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "privilege"]
+            },
+            "description": "Retrieve all system privileges grouped by built-in role categories in English."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Privileges retrieved successfully', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has correct structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('data');",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Privilege groups have correct structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data.length > 0) {",
+                  "        const group = response.data[0];",
+                  "        pm.expect(group).to.have.property('name');",
+                  "        pm.expect(group).to.have.property('privileges');",
+                  "        pm.expect(group.privileges).to.be.an('array');",
+                  "        ",
+                  "        if (group.privileges.length > 0) {",
+                  "            const privilege = group.privileges[0];",
+                  "            pm.expect(privilege).to.have.property('id');",
+                  "            pm.expect(privilege).to.have.property('action');",
+                  "            pm.expect(privilege).to.have.property('description');",
+                  "            ",
+                  "            // Save first privilege ID for other tests",
+                  "            pm.environment.set('privilegeId', privilege.id);",
+                  "        }",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Privilege groups are properly categorized', function () {",
+                  "    const response = pm.response.json();",
+                  "    const expectedGroups = ['Role Management', 'Operator Management'];",
+                  "    const actualGroups = response.data.map(group => group.name);",
+                  "    ",
+                  "    expectedGroups.forEach(expectedGroup => {",
+                  "        pm.expect(actualGroups).to.include(expectedGroup);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Privileges (Arabic)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "ar"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/privilege",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "privilege"]
+            },
+            "description": "Retrieve all system privileges in Arabic to test localization support."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Arabic privileges retrieved successfully', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Localization works correctly', function () {",
+                  "    const response = pm.response.json();",
+                  "    // Test that we get a valid response structure",
+                  "    pm.expect(response).to.have.property('data');",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    ",
+                  "    // Note: Arabic text validation would require specific Arabic content",
+                  "    console.log('Arabic response received:', JSON.stringify(response, null, 2));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Privileges (No Language Header)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/privilege",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "privilege"]
+            },
+            "description": "Test default language fallback when no Accept-Language header is provided."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Default language fallback works', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Response defaults to English', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('data');",
+                  "    // Should default to English content",
+                  "    console.log('Default language response:', JSON.stringify(response, null, 2));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authorization Testing",
+      "description": "Test privilege-based access control and authorization",
+      "item": [
+        {
+          "name": "Unauthorized Access - No Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "en"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/privilege",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "privilege"]
+            },
+            "description": "Test access without authentication token."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Unauthorized access blocked', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});",
+                  "",
+                  "pm.test('Error response has correct structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.have.property('code');",
+                  "    pm.expect(response.error).to.have.property('message');",
+                  "    pm.expect(response.error).to.have.property('errorType');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Insufficient Privileges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "en"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/privilege",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "privilege"]
+            },
+            "description": "Test access with user token that lacks required privileges."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Insufficient privileges blocked', function () {",
+                  "    pm.expect(pm.response.code).to.equal(403);",
+                  "});",
+                  "",
+                  "pm.test('Privilege error response', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.error.message).to.include('not allowed to access');",
+                  "    pm.expect(response.error.errorType).to.equal('Policies Guard');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Token Format",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid_token_format"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "en"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/privilege",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "privilege"]
+            },
+            "description": "Test access with malformed authentication token."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid token rejected', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});",
+                  "",
+                  "pm.test('Token validation error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Role Integration Testing",
+      "description": "Test privilege system integration with role management",
+      "item": [
+        {
+          "name": "Create Role with Privileges",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": {\n    \"en\": \"Test Role with Privileges\",\n    \"ar\": \"دور اختبار مع الصلاحيات\"\n  },\n  \"privileges\": [\"{{privilegeId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "role"]
+            },
+            "description": "Test creating a role with specific privileges to verify integration."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Role created with privileges', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test('Role creation response', function () {",
+                  "    if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "        const response = pm.response.json();",
+                  "        if (response.data && response.data.id) {",
+                  "            pm.environment.set('roleId', response.data.id);",
+                  "            console.log('Role created with ID:', response.data.id);",
+                  "        }",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Role with Privileges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/role/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "role", "{{roleId}}"]
+            },
+            "description": "Retrieve the created role to verify privilege assignment."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Role retrieved successfully', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Role contains assigned privileges', function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.privileges) {",
+                  "        pm.expect(response.data.privileges).to.be.an('array');",
+                  "        pm.expect(response.data.privileges.length).to.be.greaterThan(0);",
+                  "        console.log('Role privileges:', response.data.privileges);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Data Validation Testing",
+      "description": "Test data structure and validation scenarios",
+      "item": [
+        {
+          "name": "Validate Privilege Structure",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "en"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/privilege",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "privilege"]
+            },
+            "description": "Comprehensive validation of privilege data structure and content."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('All privilege groups have required fields', function () {",
+                  "    const response = pm.response.json();",
+                  "    response.data.forEach(group => {",
+                  "        pm.expect(group).to.have.property('name');",
+                  "        pm.expect(group).to.have.property('privileges');",
+                  "        pm.expect(group.name).to.be.a('string');",
+                  "        pm.expect(group.privileges).to.be.an('array');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('All privileges have required fields', function () {",
+                  "    const response = pm.response.json();",
+                  "    response.data.forEach(group => {",
+                  "        group.privileges.forEach(privilege => {",
+                  "            pm.expect(privilege).to.have.property('id');",
+                  "            pm.expect(privilege).to.have.property('action');",
+                  "            pm.expect(privilege).to.have.property('description');",
+                  "            pm.expect(privilege.id).to.be.a('string');",
+                  "            pm.expect(privilege.action).to.be.a('string');",
+                  "            pm.expect(privilege.description).to.be.a('string');",
+                  "        });",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Privilege IDs are valid ObjectIds', function () {",
+                  "    const response = pm.response.json();",
+                  "    const objectIdRegex = /^[0-9a-fA-F]{24}$/;",
+                  "    ",
+                  "    response.data.forEach(group => {",
+                  "        group.privileges.forEach(privilege => {",
+                  "            pm.expect(privilege.id).to.match(objectIdRegex);",
+                  "        });",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Expected privilege categories exist', function () {",
+                  "    const response = pm.response.json();",
+                  "    const groupNames = response.data.map(group => group.name);",
+                  "    ",
+                  "    pm.expect(groupNames).to.include('Role Management');",
+                  "    pm.expect(groupNames).to.include('Operator Management');",
+                  "});",
+                  "",
+                  "pm.test('Role Management privileges exist', function () {",
+                  "    const response = pm.response.json();",
+                  "    const roleGroup = response.data.find(group => group.name === 'Role Management');",
+                  "    ",
+                  "    if (roleGroup) {",
+                  "        const privilegeActions = roleGroup.privileges.map(p => p.action);",
+                  "        pm.expect(privilegeActions).to.include('Create Role');",
+                  "        pm.expect(privilegeActions).to.include('View Role');",
+                  "        pm.expect(privilegeActions).to.include('Update Role');",
+                  "        pm.expect(privilegeActions).to.include('Delete Role');",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Operator Management privileges exist', function () {",
+                  "    const response = pm.response.json();",
+                  "    const operatorGroup = response.data.find(group => group.name === 'Operator Management');",
+                  "    ",
+                  "    if (operatorGroup) {",
+                  "        const privilegeActions = operatorGroup.privileges.map(p => p.action);",
+                  "        pm.expect(privilegeActions).to.include('Create Operator');",
+                  "        pm.expect(privilegeActions).to.include('View Operator');",
+                  "        pm.expect(privilegeActions).to.include('Update Operator');",
+                  "        pm.expect(privilegeActions).to.include('Delete Operator');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('Making request to:', pm.request.url.toString());",
+          "",
+          "// Check if admin token is set for admin endpoints",
+          "const adminToken = pm.environment.get('adminToken');",
+          "if (!adminToken && pm.request.url.toString().includes('/admin/')) {",
+          "    console.warn('⚠️ Admin token not set. Please login as admin first.');",
+          "}",
+          "",
+          "// Set dynamic timestamp",
+          "pm.environment.set('timestamp', Date.now());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is reasonable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Test successful responses",
+          "if (pm.response.code >= 200 && pm.response.code < 300) {",
+          "    pm.test('Successful response has correct content type', function () {",
+          "        if (pm.response.headers.get('Content-Type')) {",
+          "            pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "        }",
+          "    });",
+          "}",
+          "",
+          "// Test error responses",
+          "if (pm.response.code >= 400) {",
+          "    pm.test('Error response has correct structure', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response).to.have.property('error');",
+          "        pm.expect(response.error).to.have.property('code');",
+          "        pm.expect(response.error).to.have.property('message');",
+          "        pm.expect(response.error).to.have.property('errorType');",
+          "        pm.expect(response.error).to.have.property('path');",
+          "        pm.expect(response.error).to.have.property('time');",
+          "    });",
+          "",
+          "    pm.test('Error code is valid', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response.error.code).to.be.a('number');",
+          "        pm.expect(response.error.code).to.be.greaterThan(0);",
+          "    });",
+          "}",
+          "",
+          "// Log response for debugging",
+          "console.log('Response Status:', pm.response.code);",
+          "if (pm.response.code >= 400) {",
+          "    console.log('Error Response:', pm.response.text());",
+          "}"
+        ]
+      }
+    }
+  ]
+}

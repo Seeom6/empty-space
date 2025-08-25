@@ -1,0 +1,85 @@
+{
+  "id": "auth-api-environment",
+  "name": "Authentication API Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the authentication API",
+      "enabled": true
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "description": "JWT access token for authenticated requests",
+      "enabled": true
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "description": "JWT refresh token (usually stored in HTTP-only cookie)",
+      "enabled": true
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "description": "Password reset token",
+      "enabled": true
+    },
+    {
+      "key": "userEmail",
+      "value": "test@example.com",
+      "description": "Test user email for login",
+      "enabled": true
+    },
+    {
+      "key": "userPhone",
+      "value": "+1234567890",
+      "description": "Test user phone number for registration",
+      "enabled": true
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "description": "Admin user email for admin login",
+      "enabled": true
+    },
+    {
+      "key": "employeeEmail",
+      "value": "employee@example.com",
+      "description": "Employee email for employee registration",
+      "enabled": true
+    },
+    {
+      "key": "inviteCode",
+      "value": "INVITE123",
+      "description": "Valid invite code for employee registration",
+      "enabled": true
+    },
+    {
+      "key": "testOtp",
+      "value": "12345",
+      "description": "Test OTP code (replace with actual OTP from email/SMS)",
+      "enabled": true
+    },
+    {
+      "key": "timestamp",
+      "value": "",
+      "description": "Dynamic timestamp for unique data generation",
+      "enabled": true
+    },
+    {
+      "key": "uniquePhone",
+      "value": "",
+      "description": "Dynamically generated unique phone number",
+      "enabled": true
+    },
+    {
+      "key": "uniqueEmail",
+      "value": "",
+      "description": "Dynamically generated unique email",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}
