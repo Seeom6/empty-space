@@ -6,7 +6,7 @@ import * as morgan from "morgan"
 export const nestConfig = async (app: NestExpressApplication, envService: EnvironmentService) => {
     app.enableCors({
         origin: "*",
-        credentials: true,
+        // credentials: true,
     })
     app.use(cookieParser())
     app.use(morgan("dev"))

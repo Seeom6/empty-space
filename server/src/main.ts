@@ -17,13 +17,12 @@ async function bootstrap() {
 
   nestjsFilter(app);
   await nestConfig(app, envService);
-
   const port = envService.get("app.port");
   
   setupSwagger(app, envService);
   await app.listen(port).then(()=>{});
   console.log(`\n🚀 Server running on http://${envService.get("app.host")}:${port}`);
-  
+
 }
 
 void bootstrap();

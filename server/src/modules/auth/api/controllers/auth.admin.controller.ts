@@ -3,7 +3,7 @@ import { Body, Post, Res } from "@nestjs/common";
 import { LogInDto } from "../dto/request/logIn.dto";
 import { Controller } from "@nestjs/common";
 import { Response } from "express"
-import { RegisterEmployeeDto, RegisterEmployeeValidator } from "../dto/request";
+import { RegisterEmployeeDto, RegisterEmployeeValidator, SendOtpDto } from "../dto/request";
 
 @Controller("admin/auth")
 export class AuthAdminController {
@@ -21,4 +21,10 @@ export class AuthAdminController {
         const data = await this.authAdminService.registerEmployee(body)
         return data
     }
-}
+
+    @Post("send-otp")
+    async sendOtp(@Body() body: SendOtpDto){
+        const data = await this.authAdminService.sendOtp(body)
+        return {data}
+    }
+} 

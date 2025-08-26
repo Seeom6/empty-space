@@ -14,7 +14,7 @@ import { RefreshTokenStrategy } from "@Package/auth/passport/strategy/refresh-to
 import { StrategyConstant } from "@Package/auth";
 import { RedisModule } from "@Infrastructure/cache";
 import { AccountModule } from '@Modules/account/account/account.module';
-import { RegisterEmployeeValidator } from './api/dto/request';
+import { RegisterEmployeeValidator, sendOtpValidation } from './api/dto/request';
 import { InviteCodeModule } from '@Modules/invite-code/invite-code.module';
 import { QueueModule } from '@Infrastructure/queue';
 @Module({
@@ -41,7 +41,8 @@ import { QueueModule } from '@Infrastructure/queue';
     JwtAuthGuard,
     RefreshTokenGuard,
     RefreshTokenStrategy,
-    RegisterEmployeeValidator
+    RegisterEmployeeValidator,
+    sendOtpValidation
   ],
   exports: [JwtStrategy, PassportModule]
 })

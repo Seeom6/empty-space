@@ -13,7 +13,7 @@ export class MailWorker extends WorkerHost {
         super()
     }
     async process(job: Job): Promise<any> {
-        console.log("worker email starter")
+        console.log("worker email starter", job.data)
         await this.mailService.sendSingInOTP(job.data.email, job.data.otp)
 
     }

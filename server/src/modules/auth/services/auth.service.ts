@@ -19,6 +19,10 @@ import { EnvironmentService } from '@Infrastructure/config';
 import { AccountPayload } from '@Package/api';
 import { generateOTP } from '@Package/utilities';
 import { RedisKeys } from '@Common/cache';
+import { InjectQueue } from '@nestjs/bullmq';
+import { QueuesNames } from '@Infrastructure/queue';
+import { Queue } from 'bullmq';
+import { SendOtpDto } from '../api/dto/request';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +32,7 @@ export class AuthService {
       private readonly authError: AuthError,
       private readonly redisService: RedisService,
       private readonly environmentService: EnvironmentService,
+      @InjectQueue(QueuesNames.MAIL) private readonly emailQueue: Queue,
       @InjectConnection() private readonly connection: Connection
    ) { }
 
@@ -80,6 +85,17 @@ export class AuthService {
       };
    }
 
+   async sendOtp(body: SendOtpDto) {
+      const otp = generateOTP();
+      await this.redisService.set(`otp:${body.email}`, otp, 30000000); 
+      const otpToken = this.jwtService.sign({email: body.email, otp: otp}, {secret: this.environmentService.get("jwt.jwtAccessSecret"),expiresIn: 3000000});
+      await this.emailQueue.add(QueuesNames.MAIL, {
+         email: body.email,
+         otp,
+      })
+      return otpToken
+   }
+
    async logIn(logInInfo: LogInDto) {
       const user = await this.accountService.findByEmail(logInInfo.email, false);
       if (!user) {
@@ -126,16 +142,21 @@ export class AuthService {
       };
    }
 
-   async verifyOtp(phoneNumber: string, otp: string): Promise<{ message: string }> {
-         const storedOtp = await this.redisService.get<string>(`otp:${phoneNumber}`);
+   async verifyOtp(body: {email: string, otp: string}, otp: string): Promise<{ message: string }> {
+      const account = await this.accountService.findByEmail(body.email, false);
+      if (!account) {
+         this.authError.throw(ErrorCode.ACCOUNT_NOT_FOUND);
+      }
+         const storedOtp = await this.redisService.get<string>(`${RedisKeys.OTP}:${body.email}`);
          if (!storedOtp) {
             this.authError.throw(ErrorCode.OTP_EXPIRED);
          }
          if (storedOtp.toString() !== otp) {
             this.authError.throw(ErrorCode.INVALID_OTP);
          }
-         await this.accountService.updateByPhone(phoneNumber, { isVerified: true });
-         await this.redisService.del([`otp:${phoneNumber}`]);
+         account.isVerified = true;
+         await account.save()
+         await this.redisService.del([`${RedisKeys.OTP}:${body.email}`]);
 
          return { message: 'OTP verified successfully' };
    }

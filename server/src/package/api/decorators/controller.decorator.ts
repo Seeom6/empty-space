@@ -15,7 +15,6 @@ export function AuthWebController(options: { prefix: string }){
 export function WebController(options: { prefix: string }){
   return applyDecorators(
     Controller({path: `${PathPrefixEnum.WEB}/${options.prefix}`}),
-    // UseGuards(APIKeyGuard),
     UseInterceptors(ResponseInterceptor)
   )
 }

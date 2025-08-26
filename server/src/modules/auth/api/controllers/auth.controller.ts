@@ -6,8 +6,9 @@ import {RefreshTokenGuard} from "@Package/auth/guards";
 import {RefreshPayload} from "@Package/api/decorators/refresh-payload.decorator";
 import { Account, AccountPayload, AuthWebController, WebController } from '@Package/api';
 import { SingInDto } from '../dto/request/singIn.dto';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { RedisKeys } from '@Common/cache';
+import { SendOtpDto } from '../dto/request';
 
 @WebController({
    prefix: "auth"
@@ -60,8 +61,8 @@ export class AuthControllerWithToken {
    ){}
 
    @Post('verify-otp')
-   async verifyOtp(@Account() user: AccountPayload, @Body() body: { otp: string }) {
-      return await this.authService.verifyOtp(user.email, body.otp);
+   async verifyOtp(@Account() user: {email: string, otp: string}, @Body() body: { otp: string }) {
+      return await this.authService.verifyOtp(user, body.otp);
    }
 
    @Post('verify-reset-otp')
