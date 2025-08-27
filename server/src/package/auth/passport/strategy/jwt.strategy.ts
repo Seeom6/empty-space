@@ -38,13 +38,19 @@ export class JwtStrategy extends PassportStrategy(
       this.redisService.get(`${payload.accountId}`),
       this.redisService.get(`${payload.accountId}privileges`),
     ]);
-    if (!authToken || !privileges)
-      throw new AppError({
+    if(!payload){
+           throw new AppError({
         code: ErrorCode.EXPIRED_ACCESS_TOKEN,
         message: "Expired access token",
         errorType: "JwtStrategy"
       });
-    const redisPayload: any = this.jwtService.decode(authToken as string);
-    return { ...redisPayload, privileges };
+    }
+    // if (!authToken || !privileges)
+    //   throw new AppError({
+    //     code: ErrorCode.EXPIRED_ACCESS_TOKEN,
+    //     message: "Expired access token",
+    //     errorType: "JwtStrategy"
+    //   });
+    return { ...payload, privileges };
   }
 }

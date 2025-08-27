@@ -19,7 +19,7 @@ export class AuthAdminController {
     @Post("register")
     async register(@Body(RegisterEmployeeValidator) body: RegisterEmployeeDto){
         const data = await this.authAdminService.registerEmployee(body)
-        return data
+        return {data}
     }
 
     @Post("send-otp")

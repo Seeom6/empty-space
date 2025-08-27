@@ -151,6 +151,7 @@ export class AuthService {
          if (!storedOtp) {
             this.authError.throw(ErrorCode.OTP_EXPIRED);
          }
+         console.log(storedOtp,otp)
          if (storedOtp.toString() !== otp) {
             this.authError.throw(ErrorCode.INVALID_OTP);
          }

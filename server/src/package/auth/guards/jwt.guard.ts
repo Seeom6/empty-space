@@ -37,6 +37,7 @@ export class JwtAuthGuard extends AuthGuard(StrategyConstant.jwt) {
         })
       );
     }
+    console.log("user====",user)
     return user;
   }
 }

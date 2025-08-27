@@ -10,6 +10,7 @@ const AuthErrorMessages = {
   [ErrorCode.INVALID_CREDENTIALS]: 'Invalid credentials',
   [ErrorCode.INVALID_RESET_TOKEN]: 'Invalid or expired password reset token',
   [ErrorCode.REFRESH_TOKEN_NOT_IN_REDIS]: 'refresh token not in redis',
+  [ErrorCode.INVITE_CODE_USED]: 'invite code ealready used '
 };
 
 @Injectable()

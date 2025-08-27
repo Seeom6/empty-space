@@ -76,6 +76,7 @@ export class AuthAdminService {
     async registerEmployee(body: RegisterEmployeeDto) {
         const inviteCode = await this.inviteCodeService.checkInviteCodeForRegister(body.inviteCode)
         if (!inviteCode) this.authError.throw(ErrorCode.INVITE_CODE_NOT_FOUND)
+        if(inviteCode.status === InviteCodeStatus.USED) this.authError.throw(ErrorCode.INVITE_CODE_USED)
         const [isExist, isPhoneNumberExist] = await Promise.all([
             this.accountService.findByEmail(body.email, false),
             this.accountService.findByPhone(body.phoneNumber, false)
@@ -113,8 +114,10 @@ export class AuthAdminService {
             email: body.email,
             otp: otp
         })
+        console.log("pre sotre in redis ",otp)
         await this.redisService.set(`${RedisKeys.OTP}:${body.email}`, otp, 30000000);
-        return
+        const otpToken = this.jwtService.sign({ email: body.email, otp: otp }, { secret: this.environmentService.get("jwt.jwtAccessSecret"), expiresIn: 3000000 });
+        return otpToken
     }
 
     async sendOtp(body: SendOtpDto) {

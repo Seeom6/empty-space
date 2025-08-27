@@ -118,7 +118,8 @@ export class InviteCodeAdminService {
                     path: "position",
                 }
             },
-            error: this.inviteCodeError.error(ErrorCode.INVITE_CODE_NOT_FOUND)})
+            })
+            
         return inviteCode
     }
 
