@@ -8,7 +8,7 @@ import { setupSwagger } from '@Package/doc/swagger/swagger.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {cors:true});
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
   // Use Winston as the main logger for NestJS
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));

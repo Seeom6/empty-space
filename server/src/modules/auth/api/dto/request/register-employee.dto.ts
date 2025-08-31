@@ -9,7 +9,7 @@ const schema = z.object({
     password: z.string(),
     inviteCode: z.string(),
     image: z.string().optional(),
-    birthday: z.date().optional(),
+    birthday: z.string().optional().transform((val) => val ? new Date(val) : undefined),
 })
 
 

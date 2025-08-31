@@ -5,12 +5,22 @@ import { NestExpressApplication } from "@nestjs/platform-express"
 import * as morgan from "morgan"
 import * as cors from "cors"
 export const nestConfig = async (app: NestExpressApplication, envService: EnvironmentService) => {
-    // app.enableCors({
-    //     origin: "*",
-    //     })
-    app.use(cookieParser())
-    app.use(morgan("dev"))
-    app.setGlobalPrefix(`api/v${envService.get("app.version")}`)
-    const redisService = app.get(RedisService)
-    await redisService.connect()
-}
+    app.use(cookieParser());
+    app.use(morgan("dev"));
+    app.setGlobalPrefix(`api/v${envService.get("app.version")}`);
+    
+    app.enableCors({
+      origin: [
+        "http://localhost:3000", // client frontend
+        "http://localhost:3001", // dashboard frontend (if different port)
+        "http://127.0.0.1:3000", // alternative localhost
+        "http://127.0.0.1:3001"  // alternative localhost
+      ],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    });
+
+    const redisService = app.get(RedisService);
+    await redisService.connect();
+};
