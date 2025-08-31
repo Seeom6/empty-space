@@ -89,4 +89,16 @@ export class TechnologyServiceAdmin {
         }));
         return technologies;
     }
+
+    async findAllByIds(param: {ids: string[], throwError?: boolean}){
+        const technologies = await this.technologyRepo.find({
+            filter: {
+                _id: {
+                    $in: param.ids
+                }
+            }
+        })
+        if(technologies.length != param.ids.length && param.throwError) this.technologyError.throw(ErrorCode.TECHNOLOGY_NOT_FOUND) 
+        return technologies
+    }
 }
