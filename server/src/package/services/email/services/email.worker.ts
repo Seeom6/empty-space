@@ -29,8 +29,8 @@ export class MailWorker extends WorkerHost {
             console.log(`Retrying job ${job.id}...`);
         } else {
             console.log(`Job ${job.id} failed after 3 attempts.`);
-            const user = await this.accountService.findByEmail(job.data.email)
-            console.log(user)
+            // const user = await this.accountService.findByEmail(job.data.email)
+            // console.log(user)
         }
     }
 

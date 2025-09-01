@@ -1,14 +1,16 @@
 import { InjectConnection } from "@nestjs/mongoose";
-import { LogInDto } from "../api/dto/request/logIn.dto";
+import { Queue } from "bullmq";
 import { Injectable } from "@nestjs/common";
 import { Connection } from "mongoose";
-import { AuthError } from "./auth.error";
 import { JwtService } from "@nestjs/jwt";
-import { ErrorCode } from "../../../common/error/error-code";
+import { InjectQueue } from "@nestjs/bullmq";
+
+import { ErrorCode } from "@Common/error";
+import { LogInDto } from "../api/dto/request/logIn.dto";
+import { AuthError } from "./auth.error";
 import { AccountService } from "@Modules/account/account/services";
 import { AccountRole } from "@Modules/account/account/types/role.enum";
 import { RedisService } from "@Infrastructure/cache";
-import { MailService } from "@Package/services";
 import { AccountPayload } from "@Package/api";
 import { RegisterEmployeeDto, SendOtpDto } from "../api/dto/request";
 import { InviteCodeAdminService } from "@Modules/invite-code/services";
@@ -16,9 +18,7 @@ import { Employee } from "@Modules/account/account/data/schemas/employee.schems"
 import { Account, AccountRepository } from "@Modules/account/account/data";
 import { EmployeeStatus, EmploymentType } from "@Modules/account/employee/types";
 import { InviteCodeStatus } from "@Modules/invite-code/types";
-import { InjectQueue } from "@nestjs/bullmq";
 import { QueuesNames } from "@Infrastructure/queue";
-import { Queue } from "bullmq";
 import { generateOTP } from "@Package/utilities";
 import { RedisKeys } from "@Common/cache";
 import { EnvironmentService } from "@Infrastructure/config";
@@ -73,10 +73,11 @@ export class AuthAdminService {
         };
     }
 
-    async registerEmployee(body: RegisterEmployeeDto) {
+    async registerEmployee(body: RegisterEmployeeDto, user: {email: string, status: boolean}) {
+        if(!user.status) this.authError.throw(ErrorCode.INVALID_OTP)
         const inviteCode = await this.inviteCodeService.checkInviteCodeForRegister(body.inviteCode)
         if (!inviteCode) this.authError.throw(ErrorCode.INVITE_CODE_NOT_FOUND)
-        if(inviteCode.status === InviteCodeStatus.USED) this.authError.throw(ErrorCode.INVITE_CODE_USED)
+        if (inviteCode.status === InviteCodeStatus.USED) this.authError.throw(ErrorCode.INVITE_CODE_USED)
         const [isExist, isPhoneNumberExist] = await Promise.all([
             this.accountService.findByEmail(body.email, false),
             this.accountService.findByPhone(body.phoneNumber, false)
@@ -112,9 +113,9 @@ export class AuthAdminService {
         const otp = generateOTP(5)
         await this.emailQueue.add("send-verification-email", {
             email: body.email,
-            otp: otp
-        })
-        console.log("pre sotre in redis ",otp)
+            otp: otp.toString()
+        })          
+        console.log("pre sotre in redis ", otp)
         await this.redisService.set(`${RedisKeys.OTP}:${body.email}`, otp, 30000000);
         const otpToken = this.jwtService.sign({ email: body.email, otp: otp }, { secret: this.environmentService.get("jwt.jwtAccessSecret"), expiresIn: 3000000 });
         return otpToken
@@ -129,5 +130,25 @@ export class AuthAdminService {
             otp,
         })
         return otpToken
+    }
+
+    async verifyOtp(body: { email: string, otp: string }, otp: string): Promise<{ message: string, otpToken: string }> {
+            // const account = await this.accountService.findByEmail(body.email, false);
+            // if (!account) {
+            //     this.authError.throw(ErrorCode.ACCOUNT_NOT_FOUND);
+            // }
+        const storedOtp = await this.redisService.get<string>(`${RedisKeys.OTP}:${body.email}`);
+        if (!storedOtp) {
+            this.authError.throw(ErrorCode.OTP_EXPIRED);
+        }
+        console.log(storedOtp, otp)
+        if (storedOtp.toString() !== otp) {
+            this.authError.throw(ErrorCode.INVALID_OTP);
+        }
+        // account.isVerified = true;
+        // await account.save()
+        await this.redisService.del([`${RedisKeys.OTP}:${body.email}`]);
+        const otpToken = this.jwtService.sign({ email: body.email, status: true }, { secret: this.environmentService.get("jwt.jwtAccessSecret"), expiresIn: 3000000 });
+        return { message: 'OTP verified successfully', otpToken };
     }
 }

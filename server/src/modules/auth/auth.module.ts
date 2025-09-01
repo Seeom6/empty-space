@@ -8,7 +8,7 @@ import { JwtStrategy } from '@Package/auth/passport/strategy/jwt.strategy';
 import { AuthError } from "@Modules/auth/services/auth.error";
 import { MailService } from "@Package/services";
 import { AuthAdminService } from './services/auth.admin.service';
-import { AuthAdminController } from './api/controllers/auth.admin.controller';
+import { AuthAdminController, AuthAdminControllerWithToken } from './api/controllers/auth.admin.controller';
 import { RefreshTokenGuard } from "@Package/auth/guards";
 import { RefreshTokenStrategy } from "@Package/auth/passport/strategy/refresh-token.strategy";
 import { StrategyConstant } from "@Package/auth";
@@ -30,7 +30,8 @@ import { QueueModule } from '@Infrastructure/queue';
     AuthController,
     AuthControllerWithToken,
     AuthAdminController,
-    RefreshController
+    RefreshController,
+    AuthAdminControllerWithToken
   ],
   providers: [
     AuthService,

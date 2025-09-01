@@ -25,7 +25,7 @@ export class Employee  implements IEmployee{
     baseSalary?: number;
     @Prop({
         type: String,
-        required: true
+        default: null
     })
     inviteCode?: string;
     @Prop({

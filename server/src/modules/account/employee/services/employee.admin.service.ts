@@ -162,6 +162,7 @@ export class EmployeeAdminService {
             baseSalary: body.baseSalary,
             status: EmployeeStatus.ACTIVE,
             hireDate: new Date(),
+            inviteCode: null
         };
         const account: Account = {
             email: body.email,
