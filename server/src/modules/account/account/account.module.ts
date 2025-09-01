@@ -11,6 +11,7 @@ import {
 } from "./api/controllers";
 import { UserModule } from "../user/user.module";
 import { RedisModule } from "@Infrastructure/cache";
+import {EmployeeService} from "@Modules/account/account/services/employee.service";
 
 @Module({
   providers: [
@@ -18,6 +19,8 @@ import { RedisModule } from "@Infrastructure/cache";
     AccountOperatorService,
     AccountRepository,
     AccountService,
+    EmployeeService,
+    EmployeeService
   ],
   controllers: [AccountDashboardController, AccountMobileController],
   imports: [
@@ -25,6 +28,6 @@ import { RedisModule } from "@Infrastructure/cache";
     forwardRef(() => UserModule),
     RedisModule
   ],
-  exports: [AccountOperatorService, AccountService, AccountRepository],
+  exports: [AccountOperatorService, AccountService, AccountRepository, EmployeeService],
 })
 export class AccountModule {}

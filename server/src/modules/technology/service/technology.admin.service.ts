@@ -98,7 +98,7 @@ export class TechnologyServiceAdmin {
                 }
             }
         })
-        if(technologies.length != param.ids.length && param.throwError) this.technologyError.throw(ErrorCode.TECHNOLOGY_NOT_FOUND) 
+        if(technologies.length != param.ids.length && param.throwError) this.technologyError.throw(ErrorCode.TECHNOLOGY_NOT_FOUND)
         return technologies
     }
 }

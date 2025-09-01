@@ -5,6 +5,7 @@ import { ProjectStatus, ProjectPriority } from "../types";
 import { IProject } from "./project.entity";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { VDocument } from "@Infrastructure/database";
+import {Account} from "@Modules/account/account/data";
 
 
 export type ProjectDocument = VDocument<Project>
@@ -67,19 +68,22 @@ export class Project implements IProject {
     deadline: Date;
     @Prop({
         type: [mongoose.Schema.Types.ObjectId],
+        ref: Account.name,
         required: true
     })
-    members: (Types.ObjectId | Employee)[];
+    members: (Types.ObjectId | Account)[];
     @Prop({
         type: mongoose.Schema.Types.ObjectId,
+        ref: Account.name,
         required: true
     })
-    manger: Types.ObjectId | Employee;
+    manger: Types.ObjectId | Account;
     @Prop({
         type: [mongoose.Schema.Types.ObjectId],
-        required: true
+        required: true,
+      ref: Technology.name
     })
-    technology: (Types.ObjectId | Technology)[];
+    technology: (mongoose.Types.ObjectId | Technology)[];
     
 }
 

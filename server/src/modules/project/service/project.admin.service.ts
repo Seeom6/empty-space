@@ -1,12 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { IProject, ProjectRepository } from "../data";
-import { CreateProjectDto } from "../api/dto/create-project.dto";
-import { AccountService } from "@Modules/account/account/services";
+import { CreateProjectDto } from "@Modules/project/api/dto";
 import { TechnologyServiceAdmin } from "@Modules/technology/service";
 import { EmployeeService } from "@Modules/account/account/services/employee.service";
-import { ProjectStatus } from "../types";
-import mongoose from "mongoose";
 import { toMongoId } from "@Package/utilities";
+import {Pagination, QueryValue} from "@Package/api";
+import {GetAllProjectDto} from "@Modules/project/api/dto/get-all-project.dto";
 
 
 @Injectable()
@@ -18,6 +17,7 @@ export class ProjectAdminService {
     ){}
 
     async createProject(body: CreateProjectDto){
+
         await Promise.all([
             this.technologyService.findAllByIds({ids: body.technology}),
             this.employeeService.findEmployeeByIds({ids: body.members})
@@ -39,6 +39,35 @@ export class ProjectAdminService {
         }
         await this.projectRepository.create({
             doc: project
+        })
+    }
+
+    async  findAll(
+      query: QueryValue<GetAllProjectDto>,
+      pagination: Pagination
+    ){
+      console.log(pagination)
+        const [data, totalRecord] = await Promise.all([
+          this.projectRepository.find(
+            {filter:{...query},
+              options:{
+                populate:[{path:"manger"}, {path:"technology"}],
+                skip: pagination.skip,
+                limit: pagination.limit
+              }}),
+          this.projectRepository.countDocuments({filter: {...query}})
+        ])
+      return {totalRecord,data}
+    }
+
+    async getById(id: string){
+        return await this.projectRepository.findOne({
+          filter:{_id: toMongoId(id)},
+          options:{populate:[
+            {path:"manger",populate: [{path: "employee.position"}]},
+              {path:"technology"},
+              {path:"members", populate: [{path: "employee.position"}]}
+            ]}
         })
     }
 }

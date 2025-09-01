@@ -2,6 +2,7 @@ import { MongoId } from "@Package/utilities";
 import { ProjectPriority, ProjectStatus } from "../types";
 import { Employee } from "@Modules/account/account/data/schemas/employee.schems";
 import { Technology } from "@Modules/technology/data";
+import {Account} from "@Modules/account/account/data";
 
 export interface IProject {
     _id?: MongoId
@@ -14,8 +15,8 @@ export interface IProject {
     endDate: Date;
     startDate: Date;
     deadline: Date;
-    members: (MongoId | Employee)[];
-    manger: MongoId | Employee;
+    members: (MongoId | Account)[];
+    manger: MongoId | Account;
     technology: (MongoId | Technology)[];
     tags: string[]
 }

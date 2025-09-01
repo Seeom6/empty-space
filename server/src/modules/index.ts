@@ -11,6 +11,7 @@ import { PositionModule } from "./position/position.module";
 import { DepartmentModule } from "./department/department.module";
 import { EmployeeModule } from "./account/employee/employee.module";
 import { InviteCodeModule } from "./invite-code/invite-code.module";
+import {ProjectModule} from "@Modules/project/project.module";
 
 export const Modules = [
   OperatorModule,
@@ -24,6 +25,7 @@ export const Modules = [
   DepartmentModule,
   PositionModule,
   EmployeeModule,
-  InviteCodeModule
+  InviteCodeModule,
+  ProjectModule
   // AgendaModule
 ];
