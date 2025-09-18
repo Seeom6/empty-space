@@ -16,8 +16,8 @@ import { SystemQueue } from "./queues";
                     connection: {
                         host: host,
                         port: port,
-                        db: 0,
-                    }, 
+                        db: databaseIndex,
+                    },
                     defaultJobOptions: {
                         removeOnComplete: 100,
                         removeOnFail: 200,

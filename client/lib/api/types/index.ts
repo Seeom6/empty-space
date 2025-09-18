@@ -175,30 +175,225 @@ export const MutationKeys = {
   DELETE_POSITION: 'deletePosition',
 } as const;
 
-// Authentication Types based on API_AUTHENTICATION.md
+// Authentication Types based on AUTHENTICATION_API_DOCUMENTATION.md
 
-// User Profile (for /auth/me endpoint if it exists)
-export interface User {
-  accountId: string;
-  accountRole: string;
-  isActive: boolean;
-  email: string;
-  isVerified: boolean;
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  permissions?: Record<string, any>; // For backward compatibility with protected routes
+// Common Response Format
+export interface AuthApiResponse<T = any> {
+  data: T;
+  message: string;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
 }
 
-// Regular Login (POST /auth/log-in)
+export interface AuthErrorResponse {
+  error: {
+    code: number;
+    message: string;
+    type: string;
+    timestamp: string;
+    requestId: string;
+    details?: {
+      field?: string;
+      retryAfter?: number;
+      maxAttempts?: number;
+      remainingAttempts?: number;
+    };
+  };
+}
+
+// User Profile Types
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  accountRole: 'EMPLOYEE' | 'ADMIN' | 'SUPER_ADMIN';
+  isVerified: boolean;
+  phoneNumber?: string;
+  employee?: {
+    position: {
+      id: string;
+      name: string;
+    };
+    department: {
+      id: string;
+      name: string;
+    };
+    privileges: Array<{
+      id: string;
+      name: string;
+      description: string;
+    }>;
+    hireDate: string;
+  };
+  permissions?: Record<string, any>; // For backward compatibility
+}
+
+// Position and Department Types for Registration
+export interface Position {
+  id: string;
+  name: string;
+  department: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface Privilege {
+  id: string;
+  name: string;
+  description: string;
+}
+
+// === 4-STEP REGISTRATION FLOW ===
+
+// Step 1: Validate Invite Code (POST /auth/validate-invite-code)
+export interface ValidateInviteCodeRequest {
+  inviteCode: string;
+}
+
+export interface ValidateInviteCodeResponse {
+  data: {
+    position: Position;
+    privileges: Privilege[];
+  };
+  message: string;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+// Step 2: Register Email (POST /auth/register-email)
+export interface RegisterEmailRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface RegisterEmailResponse {
+  data: {};
+  message: string;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+// Step 3: Verify Registration OTP (POST /auth/verify-registration-otp)
+export interface VerifyRegistrationOTPRequest {
+  otp: string;
+}
+
+export interface VerifyRegistrationOTPResponse {
+  data: {};
+  message: string;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+// Step 4: Complete Registration (POST /auth/complete-registration)
+export interface CompleteRegistrationRequest {
+  password: string;
+  phoneNumber?: string;
+}
+
+export interface CompleteRegistrationResponse {
+  data: {
+    user: User;
+  };
+  message: string;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+// === AUTHENTICATION ENDPOINTS ===
+
+// Login (POST /auth/log-in)
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
 export interface LoginResponse {
-  accessToken: string;
+  data: {
+    user: User;
+  };
+  message: string;
 }
+
+// Refresh Token (POST /auth/refresh)
+export interface RefreshTokenResponse {
+  data: {
+    user: User;
+  };
+  message: string;
+}
+
+// Logout (POST /auth/log-out)
+export interface LogoutResponse {
+  message: string;
+}
+
+// === PASSWORD RESET FLOW ===
+
+// Step 1: Request Password Reset (POST /auth/request-password-reset)
+export interface RequestPasswordResetRequest {
+  email: string;
+}
+
+export interface RequestPasswordResetResponse {
+  data: {};
+  message: string;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+// Step 2: Verify Password Reset OTP (POST /auth/verify-password-reset-otp)
+export interface VerifyPasswordResetOTPRequest {
+  email: string;
+  otp: string;
+}
+
+export interface VerifyPasswordResetOTPResponse {
+  data: {};
+  message: string;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+// Step 3: Complete Password Reset (POST /auth/complete-password-reset)
+export interface CompletePasswordResetRequest {
+  newPassword: string;
+}
+
+export interface CompletePasswordResetResponse {
+  data: {
+    user: {
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+    };
+  };
+  message: string;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+// === LEGACY AND ADMIN ENDPOINTS ===
 
 // Admin Login (POST /admin/auth/login)
 export interface AdminLoginRequest {
@@ -208,9 +403,14 @@ export interface AdminLoginRequest {
 
 export interface AdminLoginResponse {
   access_token: string;
+  user: {
+    id: string;
+    email: string;
+    accountRole: string;
+  };
 }
 
-// Sign-in/Registration (POST /auth/sign-in)
+// Legacy Sign-in (POST /auth/sign-in) - Deprecated
 export interface SignInRequest {
   phoneNumber: string;
   password: string;
@@ -223,22 +423,34 @@ export interface SignInResponse {
   accessToken: string;
 }
 
-// Token Refresh (POST /auth/refresh)
-export interface RefreshTokenResponse {
-  accessToken: string;
+// Employee Registration (Legacy - POST /admin/auth/register)
+export interface EmployeeRegistrationRequest {
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  email: string;
+  password: string;
+  inviteCode: string;
+  image?: string;
+  birthday?: Date;
 }
 
-// OTP Verification (POST /auth/verify-otp, /auth/verify-reset-otp)
+export interface EmployeeRegistrationResponse {
+  data: string; // OTP token
+}
+
+// OTP Verification (Legacy endpoints)
 export interface VerifyOTPRequest {
   otp: string;
 }
 
 export interface VerifyOTPResponse {
   message: string;
-  token?: string; // Only for verify-reset-otp
+  token?: string;
+  user?: User;
 }
 
-// Password Reset (POST /auth/reset-password)
+// Password Reset (Legacy)
 export interface ResetPasswordRequest {
   otp: string;
   newPassword: string;
@@ -248,18 +460,92 @@ export interface ResetPasswordResponse {
   message: string;
 }
 
-// Auth Error Codes (from API documentation)
+// === AUTHENTICATION ERROR CODES ===
+
 export enum AuthErrorCodes {
-  USER_ALREADY_EXISTS = 2002,
-  OTP_EXPIRED_OR_NOT_FOUND = 4001,
+  // Authentication Errors (4000-4099)
+  OTP_EXPIRED = 4001,
   INVALID_OTP = 4002,
   INVALID_CREDENTIALS = 4003,
-  FAILED_TO_VERIFY_OTP = 4005,
-  SESSION_EXPIRED = 4006,
-  SESSION_EXPIRED_LOGIN_AGAIN = 4007,
+  INVALID_RESET_TOKEN = 4004,
+  OTP_VERIFICATION_FAILED = 4005,
   INVALID_TOKEN = 4009,
   REFRESH_TOKEN_NOT_IN_REDIS = 4010,
-  ACCESS_TOKEN_NOT_EXIST = 4013,
-  OTP_TOKEN_NOT_EXIST = 4014,
+  INVALID_OTP_TOKEN = 4017,
+  OTP_GENERATION_FAILED = 4018,
+  PASSWORD_RESET_FAILED = 4019,
+  TOKEN_BLACKLISTING_FAILED = 4020,
+
+  // Session Management (4200-4299)
+  INVALID_SESSION_TOKEN = 4200,
+  EXPIRED_SESSION_TOKEN = 4201,
+  SESSION_NOT_FOUND = 4202,
+
+  // Registration Flow (4300-4399)
+  REGISTRATION_TOKEN_INVALID = 4300,
+  REGISTRATION_TOKEN_EXPIRED = 4301,
+  REGISTRATION_STEP_INVALID = 4302,
+
+  // Rate Limiting (4400-4499)
+  RATE_LIMIT_EXCEEDED = 4400,
+  OTP_ATTEMPTS_EXCEEDED = 4401,
+  LOGIN_ATTEMPTS_EXCEEDED = 4402,
+
+  // Account Security (4500-4599)
+  ACCOUNT_LOCKED = 4500,
+  ACCOUNT_TEMPORARILY_LOCKED = 4501,
+  FAILED_LOGIN_LIMIT_EXCEEDED = 4503,
+
+  // Account Errors (5000-5099)
+  ACCOUNT_NOT_FOUND = 5001,
+  DUPLICATED_EMAIL = 5011,
+  DUPLICATED_PHONE_NUMBER = 5012,
+
+  // Invite Code Errors (13000-13099)
+  INVITE_CODE_NOT_FOUND = 13000,
+  INVITE_CODE_USED = 13001,
+  INVITE_CODE_EXPIRED = 13002,
+
+  // General Validation
   VALIDATION_ERROR = 70000,
 }
+
+// === AUTHENTICATION QUERY KEYS ===
+
+export const AuthQueryKeys = {
+  // User queries
+  USER_PROFILE: ['auth', 'user'] as const,
+  USER_REFRESH: ['auth', 'refresh'] as const,
+
+  // Registration flow
+  VALIDATE_INVITE: (code: string) => ['auth', 'validate-invite', code] as const,
+  REGISTRATION_STATUS: ['auth', 'registration-status'] as const,
+
+  // Password reset flow
+  PASSWORD_RESET_STATUS: ['auth', 'password-reset-status'] as const,
+} as const;
+
+// === AUTHENTICATION MUTATION KEYS ===
+
+export const AuthMutationKeys = {
+  // Registration flow
+  VALIDATE_INVITE_CODE: 'validateInviteCode',
+  REGISTER_EMAIL: 'registerEmail',
+  VERIFY_REGISTRATION_OTP: 'verifyRegistrationOTP',
+  COMPLETE_REGISTRATION: 'completeRegistration',
+
+  // Authentication
+  LOGIN: 'login',
+  LOGOUT: 'logout',
+  REFRESH_TOKEN: 'refreshToken',
+
+  // Password reset
+  REQUEST_PASSWORD_RESET: 'requestPasswordReset',
+  VERIFY_PASSWORD_RESET_OTP: 'verifyPasswordResetOTP',
+  COMPLETE_PASSWORD_RESET: 'completePasswordReset',
+
+  // Legacy
+  ADMIN_LOGIN: 'adminLogin',
+  EMPLOYEE_REGISTRATION: 'employeeRegistration',
+  VERIFY_OTP: 'verifyOTP',
+} as const;

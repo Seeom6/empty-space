@@ -3,7 +3,7 @@ import * as nodemailer from 'nodemailer';
 import { EnvironmentService } from "@Infrastructure/config";
 import { AppError } from "@Package/error";
 import { generateOTP } from '@Package/utilities';
-import { EmailTemplateService } from './template.service';
+import { EmailTemplateService } from '@Package/auth/services/email-template.service';
 import { ErrorCode } from '@Common/error';
 
 @Injectable()
@@ -53,12 +53,47 @@ export class MailService {
         if (!otp) {
             userOtp = generateOTP()
         }
-        const html = await this.emailTemplateService.getSigninTemplate(userOtp);
-        return await this.sendMail(to, "OTP for verification", html);
+
+        console.log(`[EMAIL_SERVICE] Sending OTP email to: ${to}, OTP: ${userOtp}`);
+        console.log(`[EMAIL_SERVICE] About to call getOTPEmailTemplate with data:`, { otp: userOtp });
+
+        try {
+            const template = await this.emailTemplateService.getOTPEmailTemplate({
+                otp: userOtp,
+                firstName: 'User' // Default fallback
+            });
+
+            console.log(`[EMAIL_SERVICE] Template result:`, {
+                hasTemplate: !!template,
+                hasHtml: !!template?.html,
+                hasSubject: !!template?.subject,
+                htmlLength: template?.html?.length || 0,
+                subject: template?.subject
+            });
+
+            if (!template || !template.html) {
+                console.error('[EMAIL_SERVICE] Failed to get OTP template, email will be empty');
+                console.error('[EMAIL_SERVICE] Template object:', template);
+                throw new AppError({
+                    code: ErrorCode.MAIL_ERROR,
+                    message: 'Failed to generate email template'
+                });
+            }
+
+            console.log(`[EMAIL_SERVICE] Template generated successfully, HTML preview:`, template.html.substring(0, 200) + '...');
+            console.log(`[EMAIL_SERVICE] About to send email with subject: "${template.subject}"`);
+
+            const result = await this.sendMail(to, template.subject || "OTP for verification", template.html);
+            console.log(`[EMAIL_SERVICE] Email sent successfully, result:`, result);
+            return result;
+        } catch (error) {
+            console.error(`[EMAIL_SERVICE] Error in sendSingInOTP:`, error);
+            throw error;
+        }
     }
 
     async sendPasswordResetEmail(to: string, otp: string) {
-        const html = await this.emailTemplateService.getPasswordResetTemplate(otp);
-        return await this.sendMail(to, "Reset Your Password", html);
+        const html = await this.emailTemplateService.getPasswordResetEmailTemplate({ otp });
+        return await this.sendMail(to, "Reset Your Password", html?.html || '');
     }
 }

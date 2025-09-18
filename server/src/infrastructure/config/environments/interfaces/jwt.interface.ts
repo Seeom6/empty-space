@@ -5,4 +5,6 @@ export interface IJWTEnv {
   jwtExpiredAccess: string;
   jwtExpiredRefresh: string;
   ttlRefreshToken: number;
+  issuer: string;
+  audience: string;
 }

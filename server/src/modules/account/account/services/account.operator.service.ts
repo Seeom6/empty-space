@@ -38,7 +38,12 @@ export class AccountOperatorService {
   ) {
     const accountData: any = await this.accountRepository.create({
       doc: {
+        email: account.phoneNumber + '@temp.com',
+        firstName: 'Unknown',
+        lastName: 'User',
         isActive: true,
+        isVerified: false,
+        failedLoginAttempts: 0,
         password: account.password,
         phoneNumber: account.phoneNumber,
         username: account.username,

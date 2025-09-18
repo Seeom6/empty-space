@@ -6,5 +6,6 @@ export interface IAppEnv {
   version: number;
   defaultLanguage: string
   globalPrefix: string;
-  appApiKey: string
-}  
+  appApiKey: string;
+  env: string; // NODE_ENV
+}

@@ -27,6 +27,7 @@ COPY . .
 
 COPY --from=builder /app/dist ./dist
 
+
 EXPOSE 5000
 
 CMD ["yarn", "start:dev"]
@@ -61,6 +62,9 @@ ENV NODE_ENV=production
 RUN corepack enable
 
 COPY package.json yarn.lock ./
+
+# Copy templates directory
+COPY templates/ /app/templates/
 
 RUN yarn install --production
 

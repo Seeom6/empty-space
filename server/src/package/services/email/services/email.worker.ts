@@ -13,9 +13,29 @@ export class MailWorker extends WorkerHost {
         super()
     }
     async process(job: Job): Promise<any> {
-        console.log("worker email starter", job.data)
-        await this.mailService.sendSingInOTP(job.data.email, job.data.otp)
+        console.log("[EMAIL_WORKER] Processing email job:", {
+            email: job.data.email,
+            otp: job.data.otp,
+            type: job.data.type,
+            firstName: job.data.firstName,
+            lastName: job.data.lastName
+        });
 
+        try {
+            console.log("[EMAIL_WORKER] About to call sendSingInOTP with:", {
+                email: job.data.email,
+                otp: job.data.otp
+            });
+
+            const result = await this.mailService.sendSingInOTP(job.data.email, job.data.otp);
+
+            console.log("[EMAIL_WORKER] Email sent successfully, result:", result);
+            return result;
+        } catch (error) {
+            console.error("[EMAIL_WORKER] Failed to send email:", error);
+            console.error("[EMAIL_WORKER] Error stack:", error.stack);
+            throw error;
+        }
     }
 
     @OnWorkerEvent("active")

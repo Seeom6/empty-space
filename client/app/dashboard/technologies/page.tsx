@@ -1,6 +1,7 @@
 "use client"
 import React, { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
+import { useAuth } from "@/providers/auth-provider"
 
 // Import skeleton for loading state
 const SkeletonPage = dynamic(
@@ -19,30 +20,41 @@ const TechnologiesManagement = dynamic(
 
 const TechnologiesPage = () => {
   const [isClient, setIsClient] = useState(false)
+  const { user, isAuthenticated, isLoading } = useAuth()
 
   // Ensure we're on the client side to prevent SSR issues
   useEffect(() => {
     setIsClient(true)
 
-    // Debug: Check if auth token exists
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token')
-      console.log('🔍 Technologies Page: Auth token check:', token ? 'Token exists' : 'No token found')
-      if (token) {
-        console.log('🔍 Token preview:', token.substring(0, 20) + '...')
-      }
-    }
-  }, [])
+    // Debug: Check authentication status
+    console.log('🔍 Technologies Page: Auth status:', {
+      isAuthenticated,
+      userRole: user?.accountRole,
+      isLoading
+    })
+  }, [isAuthenticated, user, isLoading])
 
-  // Note: In a real application, you would get the user role from authentication context
+  // Get user role from authentication context
   // For the Technologies system, SUPER_ADMIN role is required according to API documentation
-  const userRole = "SUPER_ADMIN" // This should come from your auth context
+  const userRole = user?.accountRole || "SUPER_ADMIN"
 
   // Don't render until we're on the client side
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-lg">Loading...</div>
+      </div>
+    )
+  }
+
+  // Check authentication
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+          <p className="text-muted-foreground">Please log in to access the technologies management system.</p>
+        </div>
       </div>
     )
   }

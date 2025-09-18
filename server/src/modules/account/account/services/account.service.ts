@@ -36,11 +36,26 @@ export class AccountService {
     @InjectConnection() private readonly connection: mongoose.Connection,
   ) { }
 
-  async findByPhone(phone: string, throwError = true){
+  async findByPhone(phone: string, throwError = true, authProjection = false){
+    const projection = authProjection
+      ? {
+          _id: 1,
+          phoneNumber: 1,
+          password: 1,
+          accountRole: 1,
+          isActive: 1,
+          isVerified: 1,
+          failedLoginAttempts: 1,
+          lockedUntil: 1,
+          email: 1
+        }
+      : undefined;
+
     return await this.accountRepository.findOne({
       filter: {
         phoneNumber: phone,
       },
+      projection,
       error: throwError ? this.accountError.error(ErrorCode.INVALID_CREDENTIALS): null
     })
   }
@@ -70,8 +85,24 @@ export class AccountService {
     });
   }
 
-  async findByEmail(email: string, throwError = true) {
-    const projection = "-createdAt -updatedAt -__v";
+  async findByEmail(email: string, throwError = true, authProjection = false) {
+    // Use optimized projection for authentication operations
+    const projection = authProjection
+      ? {
+          _id: 1,
+          email: 1,
+          password: 1,
+          accountRole: 1,
+          isActive: 1,
+          isVerified: 1,
+          failedLoginAttempts: 1,
+          lockedUntil: 1,
+          phoneNumber: 1,
+          firstName: 1,
+          lastName: 1
+        }
+      : "-createdAt -updatedAt -__v";
+
     const account = await this.accountRepository.findOne({
       filter: {
         email,
@@ -247,12 +278,16 @@ export class AccountService {
 
   async createAccount(body: SingInDto, options?: {session?: ClientSession,}) {
     const result = await this.accountRepository.create({
-      doc: {        
+      doc: {
+        email: body.email || (body.phoneNumber + '@temp.com'), // Use provided email or temporary email
+        firstName: body.firstName,
+        lastName: body.lastName,
         password: body.password,
         accountRole: body.accountRole as AccountRole || AccountRole.USER,
         phoneNumber: body.phoneNumber,
         isActive: true,
         isVerified: false,
+        failedLoginAttempts: 0,
       },
       options,
     });
@@ -291,6 +326,15 @@ export class AccountService {
         error: this.accountError.error(ErrorCode.ACCOUNT_NOT_FOUND),
       });
     }
+  }
+
+  async updateByEmail(email: string, updateData: Partial<IAccount>): Promise<any> {
+    const result = await this.accountRepository.findOneAndUpdate({
+      filter: { email },
+      update: updateData,
+      error: this.accountError.error(ErrorCode.ACCOUNT_NOT_FOUND),
+    });
+    return result;
   }
 
   async getAllAccount(query?: QueryValue<GetAllAccountDto>, pagination?: Pagination) {

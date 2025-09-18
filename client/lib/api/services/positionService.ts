@@ -19,9 +19,23 @@ export class PositionService {
    * GET /admin/position
    */
   static async getAll(): Promise<Position[]> {
-    return apiRequest(() => 
-      apiClient.get<Position[]>(this.BASE_PATH)
+    const response = await apiRequest(() =>
+      apiClient.get<any>(PositionService.BASE_PATH)
     );
+
+    console.log('🔍 PositionService.getAll response:', response);
+
+    // Handle both direct array and wrapped response
+    if (Array.isArray(response)) {
+      console.log('📋 Response is direct array:', response.length);
+      return response;
+    } else if (response && Array.isArray(response.data)) {
+      console.log('📋 Response is wrapped, extracting data:', response.data.length);
+      return response.data;
+    } else {
+      console.log('❌ Unexpected response format:', response);
+      return [];
+    }
   }
 
   /**
@@ -32,9 +46,9 @@ export class PositionService {
     if (!id) {
       throw new Error('Position ID is required');
     }
-    
-    return apiRequest(() => 
-      apiClient.get<PositionWithDepartment>(`${this.BASE_PATH}/${id}`)
+
+    return apiRequest(() =>
+      apiClient.get<PositionWithDepartment>(`${PositionService.BASE_PATH}/${id}`)
     );
   }
 
@@ -44,10 +58,10 @@ export class PositionService {
    */
   static async create(data: CreatePositionRequest): Promise<Position> {
     // Validate required fields
-    this.validateCreateRequest(data);
-    
-    return apiRequest(() => 
-      apiClient.post<Position>(this.BASE_PATH, data)
+    PositionService.validateCreateRequest(data);
+
+    return apiRequest(() =>
+      apiClient.post<Position>(PositionService.BASE_PATH, data)
     );
   }
 
@@ -59,12 +73,12 @@ export class PositionService {
     if (!id) {
       throw new Error('Position ID is required');
     }
-    
+
     // Validate required fields
-    this.validateUpdateRequest(data);
-    
-    return apiRequest(() => 
-      apiClient.put<Position>(`${this.BASE_PATH}/${id}`, data)
+    PositionService.validateUpdateRequest(data);
+
+    return apiRequest(() =>
+      apiClient.put<Position>(`${PositionService.BASE_PATH}/${id}`, data)
     );
   }
 
@@ -77,8 +91,8 @@ export class PositionService {
       throw new Error('Position ID is required');
     }
     
-    return apiRequest(() => 
-      apiClient.delete<Position>(`${this.BASE_PATH}/${id}`)
+    return apiRequest(() =>
+      apiClient.delete<Position>(`${PositionService.BASE_PATH}/${id}`)
     );
   }
 
@@ -148,9 +162,9 @@ export class PositionService {
     if (!departmentId) {
       throw new Error('Department ID is required');
     }
-    
-    const positions = await this.getAll();
-    return positions.filter(position => 
+
+    const positions = await PositionService.getAll();
+    return positions.filter(position =>
       position.departmentId === departmentId && !position.isDeleted
     );
   }
@@ -160,8 +174,8 @@ export class PositionService {
    * Helper method for filtering
    */
   static async getActive(): Promise<Position[]> {
-    const positions = await this.getAll();
-    return positions.filter(position => 
+    const positions = await PositionService.getAll();
+    return positions.filter(position =>
       position.status === 'ACTIVE' && !position.isDeleted
     );
   }
@@ -171,10 +185,10 @@ export class PositionService {
    * Helper method for searching
    */
   static async search(query: string): Promise<Position[]> {
-    const positions = await this.getAll();
+    const positions = await PositionService.getAll();
     const searchTerm = query.toLowerCase();
-    
-    return positions.filter(position => 
+
+    return positions.filter(position =>
       (position.name.toLowerCase().includes(searchTerm) ||
        (position.description && position.description.toLowerCase().includes(searchTerm))) &&
       !position.isDeleted
@@ -187,8 +201,8 @@ export class PositionService {
    */
   static async existsByName(name: string, excludeId?: string): Promise<boolean> {
     try {
-      const positions = await this.getAll();
-      return positions.some(position => 
+      const positions = await PositionService.getAll();
+      return positions.some(position =>
         position.name.toLowerCase() === name.toLowerCase() &&
         position.id !== excludeId &&
         !position.isDeleted
@@ -200,7 +214,7 @@ export class PositionService {
 
   /**
    * Get position statistics
-   * Helper method for dashboard
+   * Helper method for dashboard stats
    */
   static async getStatistics(): Promise<{
     total: number;
@@ -208,43 +222,53 @@ export class PositionService {
     inactive: number;
     byDepartment: Record<string, number>;
   }> {
-    const positions = await this.getAll();
-    const activePositions = positions.filter(position => !position.isDeleted);
-    
-    // Count by department
-    const byDepartment: Record<string, number> = {};
-    activePositions.forEach(position => {
-      byDepartment[position.departmentId] = (byDepartment[position.departmentId] || 0) + 1;
-    });
-    
-    return {
-      total: activePositions.length,
-      active: activePositions.filter(position => position.status === 'ACTIVE').length,
-      inactive: activePositions.filter(position => position.status === 'INACTIVE').length,
-      byDepartment,
-    };
+    console.log('🌐 PositionService.getStatistics called');
+
+    try {
+      const positions = await PositionService.getAll();
+      console.log('📊 All positions for stats:', positions);
+
+      // Ensure positions is an array
+      if (!Array.isArray(positions)) {
+        console.log('❌ Positions is not an array:', positions);
+        return {
+          total: 0,
+          active: 0,
+          inactive: 0,
+          byDepartment: {}
+        };
+      }
+
+      const activePositions = positions.filter(position => !position.isDeleted);
+      console.log('📊 Active positions for stats:', activePositions);
+
+      // Count by department
+      const byDepartment: Record<string, number> = {};
+      activePositions.forEach(position => {
+        byDepartment[position.departmentId] = (byDepartment[position.departmentId] || 0) + 1;
+      });
+
+      const stats = {
+        total: activePositions.length,
+        active: activePositions.filter(position => position.status === 'ACTIVE').length,
+        inactive: activePositions.filter(position => position.status === 'INACTIVE').length,
+        byDepartment,
+      };
+
+      console.log('📊 Final position statistics:', stats);
+      return stats;
+    } catch (error) {
+      console.error('❌ Failed to get position statistics:', error);
+      return {
+        total: 0,
+        active: 0,
+        inactive: 0,
+        byDepartment: {}
+      };
+    }
   }
 
-  /**
-   * Bulk operations helper
-   * Update multiple positions status
-   */
-  static async bulkUpdateStatus(
-    positionIds: string[], 
-    status: 'ACTIVE' | 'INACTIVE'
-  ): Promise<Position[]> {
-    const updatePromises = positionIds.map(async (id) => {
-      const position = await this.getById(id);
-      return this.update(id, {
-        name: position.name,
-        departmentId: position.department,
-        description: position.description,
-        status,
-      });
-    });
-    
-    return Promise.all(updatePromises);
-  }
+  // Bulk operations removed for simplicity
 }
 
 export default PositionService;

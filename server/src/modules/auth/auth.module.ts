@@ -17,6 +17,26 @@ import { AccountModule } from '@Modules/account/account/account.module';
 import { RegisterEmployeeValidator, sendOtpValidation } from './api/dto/request';
 import { InviteCodeModule } from '@Modules/invite-code/invite-code.module';
 import { QueueModule } from '@Infrastructure/queue';
+import { RegistrationController } from './api/controllers/registration.controller';
+import { PasswordResetController } from './api/controllers/password-reset.controller';
+import { RegistrationService } from './services/registration.service';
+import { PasswordResetService } from './services/password-reset.service';
+import { SessionService } from './services/session.service';
+import { OtpService } from './services/otp.service';
+import { SessionTokenGuard } from '@Package/auth/guards/session-token.guard';
+import { OTPTokenGuard } from '@Package/auth/guards/otp-token.guard';
+import { RegistrationTokenGuard } from '@Package/auth/guards/registration-token.guard';
+import { EnhancedValidationGuard } from '@Package/auth/guards/enhanced-validation.guard';
+import { ProgressiveRateLimitService } from '@Package/auth/services/progressive-rate-limit.service';
+import { CSRFProtectionMiddleware } from '@Package/auth/middleware/csrf-protection.middleware';
+import { SecureCookieService } from '@Package/auth/services/secure-cookie.service';
+import { EmailTemplateService } from '@Package/auth/services/email-template.service';
+import { EnvironmentValidationService } from '@Package/auth/services/environment-validation.service';
+import { TokenBlacklistService } from '@Package/auth/services/token-blacklist.service';
+import { SecurityEventLoggingService } from '@Package/auth/services/security-event-logging.service';
+import { AuthenticationMetricsService } from '@Package/auth/services/authentication-metrics.service';
+import { AccountSecurityService } from '@Package/auth/services/account-security.service';
+import { PhoneValidationService } from '@Package/utilities/phone-validation.service';
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: [StrategyConstant.refresh_Token, StrategyConstant.jwt, ] }),
@@ -31,7 +51,9 @@ import { QueueModule } from '@Infrastructure/queue';
     AuthControllerWithToken,
     AuthAdminController,
     RefreshController,
-    AuthAdminControllerWithToken
+    AuthAdminControllerWithToken,
+    RegistrationController,
+    PasswordResetController
   ],
   providers: [
     AuthService,
@@ -43,8 +65,43 @@ import { QueueModule } from '@Infrastructure/queue';
     RefreshTokenGuard,
     RefreshTokenStrategy,
     RegisterEmployeeValidator,
-    sendOtpValidation
+    sendOtpValidation,
+    RegistrationService,
+    PasswordResetService,
+    SessionService,
+    OtpService,
+    SessionTokenGuard,
+    OTPTokenGuard,
+    RegistrationTokenGuard,
+    EnhancedValidationGuard,
+    ProgressiveRateLimitService,
+    CSRFProtectionMiddleware,
+    SecureCookieService,
+    EmailTemplateService,
+    EnvironmentValidationService,
+    TokenBlacklistService,
+    SecurityEventLoggingService,
+    AuthenticationMetricsService,
+    AccountSecurityService,
+    PhoneValidationService
   ],
-  exports: [JwtStrategy, PassportModule]
+  exports: [
+    JwtStrategy,
+    PassportModule,
+    AuthService,
+    RegistrationService,
+    PasswordResetService,
+    SessionService,
+    OtpService,
+    ProgressiveRateLimitService,
+    SecureCookieService,
+    EmailTemplateService,
+    EnvironmentValidationService,
+    TokenBlacklistService,
+    SecurityEventLoggingService,
+    AuthenticationMetricsService,
+    AccountSecurityService,
+    PhoneValidationService
+  ]
 })
 export class AuthModule {}

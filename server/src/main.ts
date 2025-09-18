@@ -21,7 +21,9 @@ async function bootstrap() {
   
   setupSwagger(app, envService);
   await app.listen(port).then(()=>{});
-  console.log(`\n🚀 Server running on http://${envService.get("app.host")}:${port}`);
+
+  const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  logger.log(`🚀 Server running on http://${envService.get("app.host")}:${port}`, 'Bootstrap');
 
 }
 

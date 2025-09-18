@@ -97,6 +97,12 @@ const systemNavItems: SidebarItem[] = [
     roles: ['admin', 'hr'],
   },
   {
+    title: 'Positions',
+    href: '/dashboard/positions',
+    icon: Building2,
+    roles: ['admin', 'hr'],
+  },
+  {
     title: 'Permissions',
     href: '/dashboard/rbac',
     icon: Shield,

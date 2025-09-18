@@ -1,121 +1,268 @@
 import { apiClient } from '../client';
 import {
+  // New 4-step registration flow types
+  ValidateInviteCodeRequest,
+  ValidateInviteCodeResponse,
+  RegisterEmailRequest,
+  RegisterEmailResponse,
+  VerifyRegistrationOTPRequest,
+  VerifyRegistrationOTPResponse,
+  CompleteRegistrationRequest,
+  CompleteRegistrationResponse,
+
+  // Authentication types
   LoginRequest,
   LoginResponse,
+  RefreshTokenResponse,
+  LogoutResponse,
+
+  // Password reset flow types
+  RequestPasswordResetRequest,
+  RequestPasswordResetResponse,
+  VerifyPasswordResetOTPRequest,
+  VerifyPasswordResetOTPResponse,
+  CompletePasswordResetRequest,
+  CompletePasswordResetResponse,
+
+  // Legacy and admin types
   AdminLoginRequest,
   AdminLoginResponse,
-  SignInRequest,
-  SignInResponse,
-  RefreshTokenResponse,
-  VerifyOTPRequest,
-  VerifyOTPResponse,
-  ResetPasswordRequest,
-  ResetPasswordResponse,
+  EmployeeRegistrationRequest,
+  EmployeeRegistrationResponse,
   User
 } from '../types';
 
 /**
+ * Utility function to read cookies
+ */
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop()?.split(';').shift() || null;
+  }
+  return null;
+};
+
+/**
  * Authentication Service
- * Handles all authentication-related API calls according to API_AUTHENTICATION.md
+ * Handles all authentication-related API calls according to AUTHENTICATION_API_DOCUMENTATION.md
+ * Supports cookie-based authentication with 4-step registration flow
  */
 export class AuthService {
+  // === 4-STEP REGISTRATION FLOW ===
+
   /**
-   * Regular user login
-   * POST /auth/log-in
+   * Step 1: Validate Invite Code
+   * POST /auth/validate-invite-code
+   * Sets sessionToken cookie (15 minutes expiry)
+   */
+  static async validateInviteCode(data: ValidateInviteCodeRequest): Promise<ValidateInviteCodeResponse> {
+    const response = await apiClient.post<ValidateInviteCodeResponse>('/website/auth/validate-invite-code', data);
+    return response.data;
+  }
+
+  /**
+   * Step 2: Register Email
+   * POST /auth/register-email
+   * Requires sessionToken cookie, sets otpToken cookie (10 minutes expiry)
+   */
+  static async registerEmail(data: RegisterEmailRequest): Promise<RegisterEmailResponse> {
+    const response = await apiClient.post<RegisterEmailResponse>('/website/auth/register-email', data);
+    return response.data;
+  }
+
+  /**
+   * Step 3: Verify Registration OTP
+   * POST /auth/verify-registration-otp
+   * Requires otpToken cookie, sets registrationToken cookie (15 minutes expiry)
+   */
+  static async verifyRegistrationOTP(data: VerifyRegistrationOTPRequest): Promise<VerifyRegistrationOTPResponse> {
+    const response = await apiClient.post<VerifyRegistrationOTPResponse>('/website/auth/verify-registration-otp', data);
+    return response.data;
+  }
+
+  /**
+   * Step 4: Complete Registration
+   * POST /auth/complete-registration
+   * Requires registrationToken cookie, sets accessToken cookie (15 minutes expiry)
+   */
+  static async completeRegistration(data: CompleteRegistrationRequest): Promise<CompleteRegistrationResponse> {
+    const response = await apiClient.post<CompleteRegistrationResponse>('/website/auth/complete-registration', data);
+    return response.data;
+  }
+
+  // === AUTHENTICATION ENDPOINTS ===
+
+  /**
+   * User Login
+   * POST /auth/login
+   * Sets accessToken and refreshToken cookies
    */
   static async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/auth/log-in', credentials);
+    const response = await apiClient.post<LoginResponse>('/website/auth/login', credentials);
     return response.data;
   }
 
   /**
-   * Admin login (SUPER_ADMIN only)
-   * POST /admin/auth/login
-   */
-  static async adminLogin(credentials: AdminLoginRequest): Promise<AdminLoginResponse> {
-    console.log('🌐 AuthService.adminLogin called with:', credentials);
-    console.log('📡 Making POST request to: /admin/auth/login');
-
-    const response = await apiClient.post<AdminLoginResponse>('/admin/auth/login', credentials);
-
-    console.log('📨 API Response status:', response.status);
-    console.log('📦 API Response data:', response.data);
-
-    return response.data;
-  }
-
-  /**
-   * Sign-in (Registration)
-   * POST /auth/sign-in
-   */
-  static async signIn(data: SignInRequest): Promise<SignInResponse> {
-    const response = await apiClient.post<SignInResponse>('/auth/sign-in', data);
-    return response.data;
-  }
-
-  /**
-   * Seller sign-in (Registration for sellers)
-   * POST /auth/seller-sign-in
-   */
-  static async sellerSignIn(data: SignInRequest): Promise<SignInResponse> {
-    const response = await apiClient.post<SignInResponse>('/auth/seller-sign-in', data);
-    return response.data;
-  }
-
-  /**
-   * Refresh authentication token
+   * Refresh Token
    * POST /auth/refresh
+   * Uses refreshToken cookie, sets new accessToken and refreshToken cookies
    */
   static async refreshToken(): Promise<RefreshTokenResponse> {
-    const response = await apiClient.post<RefreshTokenResponse>('/auth/refresh');
+    const response = await apiClient.post<RefreshTokenResponse>('/website/auth/refresh');
     return response.data;
   }
 
   /**
-   * Logout user
-   * POST /auth/log-out
+   * Logout
+   * POST /auth/logout
+   * Clears all authentication cookies
    */
-  static async logout(): Promise<void> {
-    await apiClient.post('/auth/log-out');
+  static async logout(): Promise<LogoutResponse> {
+    const response = await apiClient.post<LogoutResponse>('/website/auth/logout');
+    return response.data;
   }
 
+  // === PASSWORD RESET FLOW ===
+
   /**
-   * Verify OTP for phone number verification
-   * POST /auth/verify-otp
-   * Requires: Bearer token
+   * Step 1: Request Password Reset
+   * POST /auth/request-password-reset
+   * Sets otpToken cookie if account exists (10 minutes expiry)
    */
-  static async verifyOTP(data: VerifyOTPRequest): Promise<VerifyOTPResponse> {
-    const response = await apiClient.post<VerifyOTPResponse>('/auth/verify-otp', data);
+  static async requestPasswordReset(data: RequestPasswordResetRequest): Promise<RequestPasswordResetResponse> {
+    const response = await apiClient.post<RequestPasswordResetResponse>('/website/auth/request-password-reset', data);
     return response.data;
   }
 
   /**
-   * Verify OTP for password reset
-   * POST /auth/verify-reset-otp
-   * Requires: Bearer token
+   * Step 2: Verify Password Reset OTP
+   * POST /auth/verify-password-reset-otp
+   * Requires otpToken cookie, sets resetToken cookie (15 minutes expiry)
    */
-  static async verifyResetOTP(data: VerifyOTPRequest): Promise<VerifyOTPResponse> {
-    const response = await apiClient.post<VerifyOTPResponse>('/auth/verify-reset-otp', data);
+  static async verifyPasswordResetOTP(data: VerifyPasswordResetOTPRequest): Promise<VerifyPasswordResetOTPResponse> {
+    const response = await apiClient.post<VerifyPasswordResetOTPResponse>('/website/auth/verify-password-reset-otp', data);
     return response.data;
   }
 
   /**
-   * Reset password after OTP verification
-   * POST /auth/reset-password
-   * Requires: Bearer token
+   * Step 3: Complete Password Reset
+   * POST /auth/complete-password-reset
+   * Requires resetToken cookie, blacklists all existing tokens
    */
-  static async resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
-    const response = await apiClient.post<ResetPasswordResponse>('/auth/reset-password', data);
+  static async completePasswordReset(data: CompletePasswordResetRequest): Promise<CompletePasswordResetResponse> {
+    const response = await apiClient.post<CompletePasswordResetResponse>('/website/auth/complete-password-reset', data);
+    return response.data;
+  }
+
+  // === ADMIN ENDPOINTS ===
+
+  /**
+   * Admin Login (SUPER_ADMIN only)
+   * POST /admin/auth/login
+   * Sets accessToken cookie
+   */
+  static async adminLogin(credentials: AdminLoginRequest): Promise<AdminLoginResponse> {
+    const response = await apiClient.post<AdminLoginResponse>('/admin/auth/login', credentials);
     return response.data;
   }
 
   /**
-   * Get current user profile (if endpoint exists)
-   * This endpoint is not documented in API_AUTHENTICATION.md
-   * but may be needed for user profile functionality
+   * Admin Send OTP
+   * POST /admin/auth/send-otp
+   * Sends OTP for admin operations
    */
-  static async me(): Promise<{ user: User }> {
-    const response = await apiClient.get<{ user: User }>('/auth/me');
+  static async adminSendOTP(data: { email: string }): Promise<{ data: { message: string; otpExpiresIn: number } }> {
+    const response = await apiClient.post('/admin/auth/send-otp', data);
     return response.data;
+  }
+
+  /**
+   * Admin Verify OTP
+   * POST /admin/auth/verify-otp
+   * Verifies OTP for admin operations
+   */
+  static async adminVerifyOTP(data: { otp: string }): Promise<{ data: { message: string; verified: boolean } }> {
+    const response = await apiClient.post('/admin/auth/verify-otp', data);
+    return response.data;
+  }
+
+  // === LEGACY ENDPOINTS (for backward compatibility) ===
+
+
+
+  /**
+   * Employee registration (Legacy)
+   * POST /admin/auth/register
+   */
+  static async registerEmployee(data: EmployeeRegistrationRequest): Promise<EmployeeRegistrationResponse> {
+    const requestData: any = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      password: data.password,
+      inviteCode: data.inviteCode,
+    };
+
+    if (data.phoneNumber) requestData.phoneNumber = data.phoneNumber;
+    if (data.image) requestData.image = data.image;
+    if (data.birthday) requestData.birthday = data.birthday;
+
+    const response = await apiClient.post<EmployeeRegistrationResponse>('/admin/auth/register', requestData);
+    return response.data;
+  }
+
+
+
+  // === UTILITY FUNCTIONS ===
+
+  /**
+   * Get current user profile
+   * GET /website/auth/me
+   * Requires accessToken cookie
+   */
+  static async me(): Promise<{ data: { user: User }; message: string }> {
+    const response = await apiClient.get<{ data: { user: User }; message: string }>('/website/auth/me');
+    return response.data;
+  }
+
+  /**
+   * Check if user is authenticated via cookies
+   */
+  static isAuthenticatedViaCookies(): boolean {
+    const accessToken = getCookie('accessToken');
+    const refreshToken = getCookie('refreshToken');
+    return !!(accessToken || refreshToken);
+  }
+
+  /**
+   * Get access token from cookie
+   */
+  static getAccessTokenFromCookie(): string | null {
+    return getCookie('accessToken');
+  }
+
+  /**
+   * Get refresh token from cookie
+   */
+  static getRefreshTokenFromCookie(): string | null {
+    return getCookie('refreshToken');
+  }
+
+  /**
+   * Clear all authentication state (client-side)
+   */
+  static clearAuthState(): void {
+    if (typeof document !== 'undefined') {
+      // Clear all authentication cookies
+      const cookiesToClear = ['accessToken', 'refreshToken', 'sessionToken', 'otpToken', 'registrationToken', 'resetToken'];
+      cookiesToClear.forEach(cookieName => {
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
+      });
+
+    }
   }
 }

@@ -167,21 +167,21 @@ export function useAuth(): UseAuthReturn {
   }, [])
 
   const login = useCallback(async (
-    email: string, 
+    email: string,
     password: string
   ): Promise<{ token: string; user: any }> => {
     try {
       setLoading(true)
       setError(null)
-      
-      const result = await authApi.login({ email, password })
-      
-      // Store token in localStorage
-      if (result.token) {
-        localStorage.setItem('authToken', result.token)
+
+      const result = await authApi.adminLogin({ email, password })
+
+      // Store token in localStorage as backup (cookies are handled automatically)
+      if (result.access_token) {
+        localStorage.setItem('authToken', result.access_token)
       }
-      
-      return result
+
+      return { token: result.access_token, user: result.user || null }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to login')
       throw err

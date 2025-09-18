@@ -13,6 +13,7 @@ import { Injectable } from "@nestjs/common";
 import { TechnologyServiceAdmin } from "@Modules/technology/service";
 import { AccountDocument } from "@Modules/account/account/data";
 import { GetAllEmployeeDto } from "../api/dto/get-all-employee.dto";
+import mongoose from 'mongoose';
 
 @Injectable()
 export class EmployeeAdminService {
@@ -155,14 +156,15 @@ export class EmployeeAdminService {
         if (isExist) throw this.employeeError.throw(ErrorCode.EMPLOYEE_EXIST);
         const employee: Employee = {
             image: body.image,
-            department,
-            position,
-            technologies,
+            department: new mongoose.Types.ObjectId(department._id),
+            position: new mongoose.Types.ObjectId(position._id),
+            technologies: technologies.map(tech => new mongoose.Types.ObjectId(tech._id as string)),
+            privileges: [], // Default empty privileges
             employmentType: body.employmentType,
             baseSalary: body.baseSalary,
             status: EmployeeStatus.ACTIVE,
             hireDate: new Date(),
-            inviteCode: null
+            inviteCode: 'temp-invite-code'
         };
         const account: Account = {
             email: body.email,
@@ -171,10 +173,11 @@ export class EmployeeAdminService {
             lastName: body.lastName,
             phoneNumber: body.phoneNumber,
             accountRole: AccountRole.EMPLOYEE,
-            employee,
+            employee: employee as any,
             isActive: true,
             isVerified: true,
             birthday: body.birthday,
+            failedLoginAttempts: 0
         };
 
         await this.accountRepo.create({
@@ -213,14 +216,16 @@ export class EmployeeAdminService {
         );
         const employee: Employee = {
             image: body.image,
-            department,
-            position,
-            technologies,
+            department: new mongoose.Types.ObjectId(department._id),
+            position: new mongoose.Types.ObjectId(position._id),
+            technologies: technologies.map(tech => new mongoose.Types.ObjectId(tech._id as string)),
+            privileges: [], // Default empty privileges
             employmentType: body.employmentType,
             baseSalary: body.baseSalary,
             status: EmployeeStatus.ACTIVE,
+            inviteCode: 'updated-employee'
         };
-        doc.employee = employee;
+        doc.employee = employee as any;
         doc.email = body.email;
         doc.phoneNumber = body.phoneNumber;
         doc.firstName = body.firstName;

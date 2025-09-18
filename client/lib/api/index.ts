@@ -7,13 +7,14 @@ import { AuthService } from './services/authService';
 export * from './types';
 
 // HTTP Client
-export { 
-  apiClient, 
-  setAuthToken, 
-  ApiError, 
-  handleApiError, 
-  apiRequest, 
-  healthCheck 
+export {
+  apiClient,
+  setAuthToken,
+  clearAuthCookies,
+  ApiError,
+  handleApiError,
+  apiRequest,
+  healthCheck
 } from './client';
 
 // Services
@@ -21,6 +22,9 @@ export { AuthService } from './services/authService';
 export { TechnologyService } from './services/technologyService';
 export { DepartmentService } from './services/departmentService';
 export { PositionService } from './services/positionService';
+
+// Testing utilities (development only)
+export { testCookieAuthentication } from './test-auth-cookies';
 
 // React Query Hooks - Technology
 export {

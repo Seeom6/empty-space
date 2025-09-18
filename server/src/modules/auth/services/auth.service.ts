@@ -23,6 +23,8 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { QueuesNames } from '@Infrastructure/queue';
 import { Queue } from 'bullmq';
 import { SendOtpDto } from '../api/dto/request';
+import { OtpService } from './otp.service';
+import { RedisKeys as NewRedisKeys, RedisTTL } from './session.service';
 
 @Injectable()
 export class AuthService {
@@ -33,12 +35,13 @@ export class AuthService {
       private readonly redisService: RedisService,
       private readonly environmentService: EnvironmentService,
       @InjectQueue(QueuesNames.MAIL) private readonly emailQueue: Queue,
-      @InjectConnection() private readonly connection: Connection
+      @InjectConnection() private readonly connection: Connection,
+      private readonly otpService: OtpService
    ) { }
 
 
    public async signIn(userSignInInfo: SingInDto) {
-      const isExist = await this.accountService.findByPhone(userSignInInfo.phoneNumber, false);
+      const isExist = await this.accountService.findByPhone(userSignInInfo.phoneNumber, false, true);
       if(isExist) {
          this.authError.throw(ErrorCode.USER_ALREADY_EXISTS);
       }
@@ -65,11 +68,12 @@ export class AuthService {
          };
    
          accessToken = this.jwtService.sign(userPayload);
+         const jwtId = uuidv4();
          refresh = {
             userId: user._id.toString(),
+            jti: jwtId
          }
          const otp = generateOTP();
-         const jwtId = uuidv4()
 
          await this.redisService.set(`otp:${user.phoneNumber}`, otp, 30000000); 
          refreshToken = this.jwtService.sign(refresh, {jwtid: jwtId, secret: this.environmentService.get("jwt.jwtAccessSecret"),expiresIn: this.environmentService.get("jwt.jwtExpiredRefresh")});
@@ -87,8 +91,9 @@ export class AuthService {
 
    async sendOtp(body: SendOtpDto) {
       const otp = generateOTP();
-      await this.redisService.set(`otp:${body.email}`, otp, 30000000); 
-      const otpToken = this.jwtService.sign({email: body.email, otp: otp}, {secret: this.environmentService.get("jwt.jwtAccessSecret"),expiresIn: 3000000});
+      // CRITICAL FIX: Changed from 30000000ms (8.3 hours) to 600 seconds (10 minutes)
+      await this.redisService.set(`otp:${body.email}`, otp, 600);
+      const otpToken = this.jwtService.sign({email: body.email, otp: otp}, {secret: this.environmentService.get("jwt.jwtAccessSecret"),expiresIn: '10m'});
       await this.emailQueue.add(QueuesNames.MAIL, {
          email: body.email,
          otp,
@@ -96,8 +101,8 @@ export class AuthService {
       return otpToken
    }
 
-   async logIn(logInInfo: LogInDto) {
-      const user = await this.accountService.findByEmail(logInInfo.email, false);
+   async logIn(logInInfo: LogInDto, res: Response) {
+      const user = await this.accountService.findByEmail(logInInfo.email, false, true);
       if (!user) {
          this.authError.throw(ErrorCode.INVALID_CREDENTIALS);
       }
@@ -106,9 +111,9 @@ export class AuthService {
          logInInfo.password,
          user.password
       );
-      // if (!isPasswordValid) {
-      //    this.authError.throw(ErrorCode.INVALID_CREDENTIALS);
-      // }
+      if (!isPasswordValid) {
+         this.authError.throw(ErrorCode.INVALID_CREDENTIALS);
+      }
 
       const userPayload: AccountPayload = {
          accountId: user._id.toString(),
@@ -122,23 +127,42 @@ export class AuthService {
 
       const refresh: IRefreshToken = {
          userId: user._id.toString(),
+         jti: jwtId
       }
-      const tokens = await this.redisService.getByPattern(`${RedisKeys.REFRESH_TOKEN}:${user._id.toString()}`)
+
+      // Clean up old tokens if limit exceeded
+      const tokens = await this.redisService.getByPattern(`${NewRedisKeys.REFRESH_TOKEN(user._id.toString(), '*')}`)
       if (tokens.elements.length + 1 > TokenConstant.MAX_USER_TOKEN_COUNT) {
          const olderToken = await this.getOldTokenInRedis(tokens.elements)
          await this.redisService.del([olderToken.token])
       }
+
       const accessToken = this.jwtService.sign(userPayload);
-      const refreshToken = this.jwtService.sign(refresh, { jwtid: jwtId, secret: this.environmentService.get("jwt.jwtAccessSecret"), expiresIn: this.environmentService.get("jwt.jwtExpiredRefresh") });
+      const refreshToken = this.jwtService.sign(refresh, {
+         jwtid: jwtId,
+         secret: this.environmentService.get("jwt.jwtRefreshSecret"),
+         expiresIn: this.environmentService.get("jwt.jwtExpiredRefresh")
+      });
+
+      // Store refresh token in Redis
       await this.redisService.set(
-         `${RedisKeys.REFRESH_TOKEN}:${user._id.toString()}:${jwtId}`,
+         NewRedisKeys.REFRESH_TOKEN(user._id.toString(), jwtId),
          refreshToken,
-         this.environmentService.get("jwt.ttlRefreshToken")
+         RedisTTL.REFRESH_TOKEN
       );
 
+      // Set tokens as HTTP-only cookies
+      this.setAuthCookies(res, accessToken, refreshToken);
+
       return {
-         accessToken: accessToken,
-         refreshToken: refreshToken,
+         user: {
+            id: user._id.toString(),
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            accountRole: user.accountRole,
+            isVerified: user.isVerified
+         }
       };
    }
 
@@ -228,16 +252,28 @@ export class AuthService {
       }
    }
 
-   async refreshToken(payload: IRefreshToken, res: Response) {
-      const refreshRedisToken = await this.redisService.get<string>(`${RedisKeys.REFRESH_TOKEN}:${payload.userId}:${payload.jti}`)
+   async refreshToken(refreshTokenFromCookie: string, res: Response) {
+      let payload: IRefreshToken;
+
+      try {
+         payload = this.jwtService.verify(refreshTokenFromCookie, {
+            secret: this.environmentService.get("jwt.jwtRefreshSecret")
+         });
+      } catch (error) {
+         this.clearAuthCookies(res);
+         this.authError.throw(ErrorCode.INVALID_TOKEN);
+      }
+
+      const refreshRedisToken = await this.redisService.get<string>(NewRedisKeys.REFRESH_TOKEN(payload.userId, payload.jti))
       if (!refreshRedisToken) {
+         this.clearAuthCookies(res);
          this.authError.throw(ErrorCode.REFRESH_TOKEN_NOT_IN_REDIS);
       }
 
       const decodeToken: IRefreshToken = await this.jwtService.decode(refreshRedisToken);
       if (decodeToken.jti !== payload.jti) {
-         await this.redisService.del([`${RedisKeys.REFRESH_TOKEN}:${payload.userId}`])
-         res.cookie(`${RedisKeys.REFRESH_TOKEN}`, null)
+         await this.redisService.del([NewRedisKeys.REFRESH_TOKEN(payload.userId, payload.jti)])
+         this.clearAuthCookies(res);
          this.authError.throw(ErrorCode.INVALID_TOKEN);
       }
 
@@ -255,37 +291,62 @@ export class AuthService {
 
       const refresh: IRefreshToken = {
          userId: user._id.toString(),
+         jti: jwtId
       }
 
       const accessToken = this.jwtService.sign(userPayload);
-      const refreshToken = this.jwtService.sign(refresh, {
+      const newRefreshToken = this.jwtService.sign(refresh, {
          jwtid: jwtId,
          secret: this.environmentService.get("jwt.jwtRefreshSecret"),
          expiresIn: this.environmentService.get("jwt.jwtExpiredRefresh")
       });
-      await this.redisService.del([`${RedisKeys.REFRESH_TOKEN}:${user._id.toString()}`])
-      await this.redisService.set(`${RedisKeys.REFRESH_TOKEN}:${user._id.toString()}`, refreshToken);
-      return { accessToken, refreshToken: refreshToken };
+
+      // Delete old refresh token and store new one
+      await this.redisService.del([NewRedisKeys.REFRESH_TOKEN(payload.userId, payload.jti)])
+      await this.redisService.set(
+         NewRedisKeys.REFRESH_TOKEN(user._id.toString(), jwtId),
+         newRefreshToken,
+         RedisTTL.REFRESH_TOKEN
+      );
+
+      // Set new tokens as cookies
+      this.setAuthCookies(res, accessToken, newRefreshToken);
+
+      return {
+         user: {
+            id: user._id.toString(),
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            accountRole: user.accountRole,
+            isVerified: user.isVerified
+         }
+      };
    }
 
-   async logOut(payload: IRefreshToken, res: Response) {
-      const refreshRedisToken = await this.redisService.get<string>(`${RedisKeys.REFRESH_TOKEN}:${payload.userId}:${payload.jti}`)
-      if (!refreshRedisToken) {
-         this.authError.throw(ErrorCode.REFRESH_TOKEN_NOT_IN_REDIS);
-      }
-      const decodeToken: IRefreshToken = await this.jwtService.decode(refreshRedisToken);
-      const result = await this.redisService.getByPattern(`${RedisKeys.REFRESH_TOKEN}:${payload.userId}`)
-      await this.getOldTokenInRedis(result.elements)
-      if (decodeToken.jti !== payload.jti) {
-         const result = await this.redisService.getByPattern(`${RedisKeys.REFRESH_TOKEN}:${payload.userId}`)
-         await this.redisService.del(result.elements)
-         await this.redisService.del([`${RedisKeys.REFRESH_TOKEN}:${payload.userId}`])
-         res.cookie(`${RedisKeys.REFRESH_TOKEN}`, null)
-         this.authError.throw(ErrorCode.INVALID_TOKEN);
-      }
-      await this.redisService.del([`${RedisKeys.REFRESH_TOKEN}:${payload.userId}:${payload.jti}`])
-      return;
+   async logOut(refreshTokenFromCookie: string, res: Response) {
+      let payload: IRefreshToken;
 
+      try {
+         payload = this.jwtService.verify(refreshTokenFromCookie, {
+            secret: this.environmentService.get("jwt.jwtRefreshSecret")
+         });
+      } catch (error) {
+         // Token is invalid, just clear cookies
+         this.clearAuthCookies(res);
+         return { message: 'Logged out successfully' };
+      }
+
+      const refreshRedisToken = await this.redisService.get<string>(NewRedisKeys.REFRESH_TOKEN(payload.userId, payload.jti))
+      if (refreshRedisToken) {
+         // Delete the refresh token from Redis
+         await this.redisService.del([NewRedisKeys.REFRESH_TOKEN(payload.userId, payload.jti)])
+      }
+
+      // Clear all authentication cookies
+      this.clearAuthCookies(res);
+
+      return { message: 'Logged out successfully' };
    }
 
    private async getOldTokenInRedis(keys: string[]): Promise<{ token: string, ttl: number }> {
@@ -298,5 +359,35 @@ export class AuthService {
       }))
       ttls.sort((a, b) => a.ttl - b.ttl)
       return ttls[0];
+   }
+
+   private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
+      const isProduction = this.environmentService.get('app.env') === 'production';
+
+      // Set access token cookie
+      res.cookie('accessToken', accessToken, {
+         httpOnly: true,
+         secure: isProduction,
+         sameSite: isProduction ? 'strict' : 'lax',
+         maxAge: 15 * 60 * 1000, // 15 minutes
+         path: '/'
+      });
+
+      // Set refresh token cookie
+      res.cookie('refreshToken', refreshToken, {
+         httpOnly: true,
+         secure: isProduction,
+         sameSite: isProduction ? 'strict' : 'lax',
+         maxAge: RedisTTL.REFRESH_TOKEN * 1000, // 7 days
+         path: '/'
+      });
+   }
+
+   private clearAuthCookies(res: Response): void {
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
+      res.clearCookie('sessionToken');
+      res.clearCookie('otpToken');
+      res.clearCookie('registrationToken');
    }
 }

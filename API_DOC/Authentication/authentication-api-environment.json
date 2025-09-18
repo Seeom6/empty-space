@@ -1,0 +1,241 @@
+{
+  "id": "auth-api-environment",
+  "name": "Empty Space Authentication API Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:12001",
+      "description": "Base URL for the authentication API",
+      "enabled": true
+    },
+    {
+      "key": "apiVersion",
+      "value": "v1",
+      "description": "API version",
+      "enabled": true
+    },
+    {
+      "key": "websitePrefix",
+      "value": "website",
+      "description": "Website API prefix",
+      "enabled": true
+    },
+    {
+      "key": "adminPrefix",
+      "value": "admin",
+      "description": "Admin API prefix",
+      "enabled": true
+    },
+    {
+      "key": "inviteCode",
+      "value": "$INV-2024-ABC123",
+      "description": "Test invite code for registration flow",
+      "enabled": true
+    },
+    {
+      "key": "testEmail",
+      "value": "test.user@example.com",
+      "description": "Test email for registration",
+      "enabled": true
+    },
+    {
+      "key": "firstName",
+      "value": "John",
+      "description": "Test first name",
+      "enabled": true
+    },
+    {
+      "key": "lastName",
+      "value": "Doe",
+      "description": "Test last name",
+      "enabled": true
+    },
+    {
+      "key": "testPassword",
+      "value": "TestPass123!",
+      "description": "Test password for registration and login",
+      "enabled": true
+    },
+    {
+      "key": "phoneNumber",
+      "value": "+1234567890",
+      "description": "Test phone number in E.164 format",
+      "enabled": true
+    },
+    {
+      "key": "otp",
+      "value": "123456",
+      "description": "Test OTP code (replace with actual OTP from email)",
+      "enabled": true
+    },
+    {
+      "key": "loginEmail",
+      "value": "existing.user@example.com",
+      "description": "Email for existing user login",
+      "enabled": true
+    },
+    {
+      "key": "loginPassword",
+      "value": "ExistingPass123!",
+      "description": "Password for existing user login",
+      "enabled": true
+    },
+    {
+      "key": "resetEmail",
+      "value": "reset.user@example.com",
+      "description": "Email for password reset testing",
+      "enabled": true
+    },
+    {
+      "key": "resetOtp",
+      "value": "654321",
+      "description": "OTP for password reset (replace with actual OTP)",
+      "enabled": true
+    },
+    {
+      "key": "newPassword",
+      "value": "NewSecurePass123!",
+      "description": "New password for reset completion",
+      "enabled": true
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "description": "Admin email for admin operations",
+      "enabled": true
+    },
+    {
+      "key": "adminPassword",
+      "value": "AdminPass123!",
+      "description": "Admin password",
+      "enabled": true
+    },
+    {
+      "key": "adminOtp",
+      "value": "789012",
+      "description": "Admin OTP (replace with actual OTP)",
+      "enabled": true
+    },
+    {
+      "key": "newEmployeeFirstName",
+      "value": "Jane",
+      "description": "New employee first name",
+      "enabled": true
+    },
+    {
+      "key": "newEmployeeLastName",
+      "value": "Smith",
+      "description": "New employee last name",
+      "enabled": true
+    },
+    {
+      "key": "newEmployeeEmail",
+      "value": "jane.smith@example.com",
+      "description": "New employee email",
+      "enabled": true
+    },
+    {
+      "key": "newEmployeePhone",
+      "value": "+1987654321",
+      "description": "New employee phone number",
+      "enabled": true
+    },
+    {
+      "key": "newEmployeePassword",
+      "value": "EmployeePass123!",
+      "description": "New employee password",
+      "enabled": true
+    },
+    {
+      "key": "newEmployeeInviteCode",
+      "value": "$INV-2024-XYZ789",
+      "description": "Invite code for new employee",
+      "enabled": true
+    },
+    {
+      "key": "newEmployeeImage",
+      "value": "https://example.com/avatar.jpg",
+      "description": "New employee profile image URL",
+      "enabled": true
+    },
+    {
+      "key": "newEmployeeBirthday",
+      "value": "1990-01-01T00:00:00.000Z",
+      "description": "New employee birthday",
+      "enabled": true
+    },
+    {
+      "key": "sessionToken",
+      "value": "",
+      "description": "Session token from invite code validation (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "otpToken",
+      "value": "",
+      "description": "OTP token from email registration (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "registrationToken",
+      "value": "",
+      "description": "Registration token from OTP verification (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "description": "Access token from login/registration (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "description": "Refresh token from login/registration (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "description": "Reset token from password reset OTP verification (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "adminAccessToken",
+      "value": "",
+      "description": "Admin access token (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "description": "User ID from registration (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "userEmail",
+      "value": "",
+      "description": "User email from registration (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "loggedInUserId",
+      "value": "",
+      "description": "Logged in user ID (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "loggedInUserEmail",
+      "value": "",
+      "description": "Logged in user email (auto-populated)",
+      "enabled": true
+    },
+    {
+      "key": "requestId",
+      "value": "",
+      "description": "Request ID for tracking (auto-generated)",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

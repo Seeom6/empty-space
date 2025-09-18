@@ -31,7 +31,7 @@ export class AgendaService implements OnModuleInit, OnModuleDestroy {
 
     async onModuleInit() {
         await this.agenda.start();
-        console.log("Agenda started");
+        this.logger.log("Agenda started");
     }
 
     async onModuleDestroy() {

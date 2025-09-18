@@ -3,8 +3,9 @@ import { ApiErrorResponse, ErrorCodes } from './types';
 
 // API Configuration
 const API_CONFIG = {
-  baseURL: 'http://localhost:12001/api/v1',
-  timeout: 10000,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:12001/api/v1',
+  timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '10000'),
+  withCredentials: true, // Enable cookies for cross-origin requests
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,30 +14,30 @@ const API_CONFIG = {
 // Create axios instance
 export const apiClient: AxiosInstance = axios.create(API_CONFIG);
 
-// Log the base URL for debugging
-console.log('🌐 API Client configured with baseURL:', API_CONFIG.baseURL);
+// API Client configured
 
-// Auth token management
+// Auth token management (cookie-based only)
 export const setAuthToken = (token: string | null) => {
-  if (token) {
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    delete apiClient.defaults.headers.common['Authorization'];
-  }
+  // Cookies are handled automatically by the browser
+  // No need to manually set Authorization headers
+  // The server will read tokens from HTTP-only cookies
 };
 
-// Initialize auth token from localStorage (moved to QueryProvider to avoid SSR issues)
+// Cookie-based authentication helper
+export const clearAuthCookies = () => {
+  // Clear authentication cookies by setting them to expire
+  if (typeof document !== 'undefined') {
+    document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure';
+    document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure';
+  }
+};
 
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Ensure auth token is always included if available
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-      if (token && !config.headers.Authorization) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
+    // Cookie-based authentication is handled automatically by the browser
+    // No need to manually set Authorization headers
+    // The browser will automatically include HTTP-only cookies
 
     // Add timestamp to prevent caching
     if (config.method === 'get') {
@@ -46,13 +47,9 @@ apiClient.interceptors.request.use(
       };
     }
 
-    const fullUrl = `${config.baseURL}${config.url}`;
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${fullUrl}`);
-    console.log(`🔑 Authorization Header: ${config.headers.Authorization ? 'Present' : 'Missing'}`);
     return config;
   },
   (error) => {
-    console.error('❌ Request Error:', error);
     return Promise.reject(error);
   }
 );
@@ -60,18 +57,15 @@ apiClient.interceptors.request.use(
 // Response interceptor
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
     return response;
   },
   (error: AxiosError<ApiErrorResponse>) => {
-    console.error('❌ API Error:', error.response?.data || error.message);
     
     // Handle specific error cases
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('auth_token');
-      setAuthToken(null);
-      
+      // Unauthorized - clear cookies and redirect to login
+      clearAuthCookies();
+
       // Only redirect if we're in the browser
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/login';

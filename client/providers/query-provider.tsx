@@ -10,18 +10,9 @@ interface QueryProviderProps {
 }
 
 export function QueryProvider({ children }: QueryProviderProps) {
-  // Initialize API client with auth token
+  // Authentication is now cookie-based only - no localStorage initialization needed
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token')
-      console.log('🔧 QueryProvider: Checking for auth token in localStorage:', token ? 'Found' : 'Not found')
-      if (token) {
-        setAuthToken(token)
-        console.log('✅ QueryProvider: Auth token set in API client')
-      } else {
-        console.log('❌ QueryProvider: No auth token found')
-      }
-    }
+    console.log('🍪 QueryProvider: Authentication is now cookie-based only')
   }, [])
 
   // Create a stable QueryClient instance

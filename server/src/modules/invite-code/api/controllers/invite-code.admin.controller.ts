@@ -1,6 +1,6 @@
 import { InviteCodeAdminService } from "@Modules/invite-code/services/invite-code.admin.service";
 import { Body, Get, Post, Query } from "@nestjs/common";
-import { AdminController, queryParser } from "@Package/api";
+import { AdminController, queryParser, Account } from "@Package/api";
 import { CreateInviteCodeDto, CreateInviteCodeValidation, GetAllInviteCodeDto, GetAllInviteCodeValidator } from "../dto";
 import { getAllInviteCodeResponse } from "../dto/response/get-all-invite-code.dto";
 
@@ -15,9 +15,10 @@ export class InviteCodeAdminController {
 
     @Post()
     async createInviteCode(
-        @Body(CreateInviteCodeValidation) body: CreateInviteCodeDto
+        @Body(CreateInviteCodeValidation) body: CreateInviteCodeDto,
+        @Account() user: { accountId: string; email: string }
     ){
-        return this.inviteCodeService.createInviteCode(body)
+        return this.inviteCodeService.createInviteCode(body, user.accountId)
     }
 
     @Get("home")

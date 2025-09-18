@@ -18,8 +18,8 @@ export class DepartmentService {
    * GET /admin/department
    */
   static async getAll(): Promise<Department[]> {
-    return apiRequest(() => 
-      apiClient.get<Department[]>(this.BASE_PATH)
+    return apiRequest(() =>
+      apiClient.get<Department[]>(DepartmentService.BASE_PATH)
     );
   }
 
@@ -32,8 +32,8 @@ export class DepartmentService {
       throw new Error('Department ID is required');
     }
     
-    return apiRequest(() => 
-      apiClient.get<Department>(`${this.BASE_PATH}/${id}`)
+    return apiRequest(() =>
+      apiClient.get<Department>(`${DepartmentService.BASE_PATH}/${id}`)
     );
   }
 
@@ -43,10 +43,10 @@ export class DepartmentService {
    */
   static async create(data: CreateDepartmentRequest): Promise<Department> {
     // Validate required fields
-    this.validateCreateRequest(data);
-    
-    return apiRequest(() => 
-      apiClient.post<Department>(this.BASE_PATH, data)
+    DepartmentService.validateCreateRequest(data);
+
+    return apiRequest(() =>
+      apiClient.post<Department>(DepartmentService.BASE_PATH, data)
     );
   }
 
@@ -60,10 +60,10 @@ export class DepartmentService {
     }
     
     // Validate required fields
-    this.validateUpdateRequest(data);
-    
-    return apiRequest(() => 
-      apiClient.put<Department>(`${this.BASE_PATH}/${id}`, data)
+    DepartmentService.validateUpdateRequest(data);
+
+    return apiRequest(() =>
+      apiClient.put<Department>(`${DepartmentService.BASE_PATH}/${id}`, data)
     );
   }
 
@@ -77,8 +77,8 @@ export class DepartmentService {
       throw new Error('Department ID is required');
     }
     
-    return apiRequest(() => 
-      apiClient.delete(`${this.BASE_PATH}/${id}`)
+    return apiRequest(() =>
+      apiClient.delete(`${DepartmentService.BASE_PATH}/${id}`)
     );
   }
 
@@ -125,8 +125,8 @@ export class DepartmentService {
    * Helper method for filtering
    */
   static async getActive(): Promise<Department[]> {
-    const departments = await this.getAll();
-    return departments.filter(dept => 
+    const departments = await DepartmentService.getAll();
+    return departments.filter(dept =>
       dept.status === 'ACTIVE' && !dept.isDeleted
     );
   }
@@ -136,10 +136,10 @@ export class DepartmentService {
    * Helper method for searching
    */
   static async search(query: string): Promise<Department[]> {
-    const departments = await this.getAll();
+    const departments = await DepartmentService.getAll();
     const searchTerm = query.toLowerCase();
-    
-    return departments.filter(dept => 
+
+    return departments.filter(dept =>
       (dept.name.toLowerCase().includes(searchTerm) ||
        (dept.description && dept.description.toLowerCase().includes(searchTerm))) &&
       !dept.isDeleted
@@ -152,8 +152,8 @@ export class DepartmentService {
    */
   static async existsByName(name: string, excludeId?: string): Promise<boolean> {
     try {
-      const departments = await this.getAll();
-      return departments.some(dept => 
+      const departments = await DepartmentService.getAll();
+      return departments.some(dept =>
         dept.name.toLowerCase() === name.toLowerCase() &&
         dept.id !== excludeId &&
         !dept.isDeleted
@@ -172,7 +172,7 @@ export class DepartmentService {
     active: number;
     inactive: number;
   }> {
-    const departments = await this.getAll();
+    const departments = await DepartmentService.getAll();
     const activeDepartments = departments.filter(dept => !dept.isDeleted);
     
     return {
@@ -191,8 +191,8 @@ export class DepartmentService {
     status: 'ACTIVE' | 'INACTIVE'
   ): Promise<Department[]> {
     const updatePromises = departmentIds.map(async (id) => {
-      const department = await this.getById(id);
-      return this.update(id, {
+      const department = await DepartmentService.getById(id);
+      return DepartmentService.update(id, {
         name: department.name,
         description: department.description,
         status,

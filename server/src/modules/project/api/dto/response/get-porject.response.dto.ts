@@ -16,12 +16,12 @@ export function GetProjectResponseDto(project: ProjectDocument) {
       members:[
         {
           name: (project.manger as any).firstName + " " + (project.manger as any).lastName,
-          position: ((project.manger as Account).employee.position as PositionDocument).name,
+          position: ((project.manger as Account).employee?.position as any)?.name || 'Unknown',
         },
         ...project.members.map((member: Account) => {
           return {
             name: member.firstName + " " + member.lastName,
-            position: ((member.employee.position as PositionDocument).name),
+            position: ((member.employee?.position as any)?.name || 'Unknown'),
           }
         })
       ]

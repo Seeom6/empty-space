@@ -14,7 +14,8 @@ export const devValidationSchema =()=>{
       version: joi.number().required(),
       globalPrefix: joi.string().required(),
       defaultLanguage: joi.string().required(),
-      appApiKey: joi.string().allow("").optional()
+      appApiKey: joi.string().allow("").optional(),
+      env: joi.string().required()
     }).required(),
     mongodb: joi.object<IDatabaseEnv>({
       host: joi.string().required(),
@@ -23,12 +24,14 @@ export const devValidationSchema =()=>{
       username: joi.string(),
       name: joi.string().required(),
     }).required(),
-    jwt:  joi.object({ 
+    jwt:  joi.object({
       jwtAccessSecret: joi.string().required(),
       jwtRefreshSecret: joi.string(),
       jwtExpiredRefresh: joi.string(),
       jwtExpiredAccess: joi.string().required(),
-      ttlRefreshToken: joi.number().required()
+      ttlRefreshToken: joi.number().required(),
+      issuer: joi.string().required(),
+      audience: joi.string().required()
     }).required(),
     mail: joi.object({
       host: joi.string().allow(""),
@@ -53,7 +56,11 @@ export const devValidationSchema =()=>{
     swagger: joi.object({
       password: joi.string().required(),
       userName: joi.string().required()
-    })
+    }),
+    cookie: joi.object({
+      secret: joi.string().required(),
+      domain: joi.string().optional()
+    }).optional()
   })
   return schema;
 }

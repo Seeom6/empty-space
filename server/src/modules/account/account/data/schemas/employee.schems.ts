@@ -21,13 +21,15 @@ export class Employee  implements IEmployee{
     employmentType: string;
     @Prop({ type: [mongoose.Schema.Types.ObjectId], required: true, ref: Technology.name })
     technologies: MongoId[] | TechnologyDocument[];
+    @Prop({ type: [mongoose.Schema.Types.ObjectId], required: true, ref: 'Privilege', default: [] })
+    privileges: MongoId[];
     @Prop({ type: Number, default: null })
     baseSalary?: number;
     @Prop({
         type: String,
-        default: null
+        required: true
     })
-    inviteCode?: string;
+    inviteCode: string;
     @Prop({
         type: String,
         default: EmployeeStatus.ACTIVE

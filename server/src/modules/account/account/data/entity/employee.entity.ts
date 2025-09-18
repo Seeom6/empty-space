@@ -9,6 +9,8 @@ export interface IEmployee {
     department: MongoId | DepartmentDocument;
     position: MongoId | PositionDocument;
     technologies: MongoId[] | TechnologyDocument[];
-    employmentType: string
+    privileges: MongoId[];
+    employmentType: string;
     baseSalary?: number;
+    inviteCode: string;
 }

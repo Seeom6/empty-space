@@ -8,6 +8,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { ErrorCode } from "@Common/error";
 import { LogInDto } from "../api/dto/request/logIn.dto";
 import { AuthError } from "./auth.error";
+import { HashService } from "@Package/auth";
 import { AccountService } from "@Modules/account/account/services";
 import { AccountRole } from "@Modules/account/account/types/role.enum";
 import { RedisService } from "@Infrastructure/cache";
@@ -38,7 +39,7 @@ export class AuthAdminService {
     ) { }
 
     async login(body: LogInDto) {
-        const user = await this.accountService.findByEmail(body.email, false);
+        const user = await this.accountService.findByEmail(body.email, false, true);
         if (!user) {
             this.authError.throw(ErrorCode.INVALID_CREDENTIALS);
         }
@@ -47,13 +48,13 @@ export class AuthAdminService {
             this.authError.throw(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        // const isPasswordValid = await HashService.comparePassword(
-        //     body.password,
-        //     user.password
-        // );
-        // if (!isPasswordValid) {
-        //     this.authError.throw(ErrorCode.INVALID_CREDENTIALS);
-        // }
+        const isPasswordValid = await HashService.comparePassword(
+            body.password,
+            user.password
+        );
+        if (!isPasswordValid) {
+            this.authError.throw(ErrorCode.INVALID_CREDENTIALS);
+        }
 
         const userPayload: AccountPayload = {
             accountId: user._id.toString(),
@@ -91,6 +92,7 @@ export class AuthAdminService {
             image: "",
             employmentType: EmploymentType.FULL_TIME,
             technologies: [],
+            privileges: [], // Default empty privileges
             status: EmployeeStatus.ACTIVE,
             hireDate: new Date(),
         }
@@ -100,11 +102,12 @@ export class AuthAdminService {
             password: body.password,
             firstName: body.firstName,
             lastName: body.lastName,
-            employee,
+            employee: employee as any,
             accountRole: AccountRole.EMPLOYEE,
             isActive: true,
             isVerified: false,
             birthday: body.birthday,
+            failedLoginAttempts: 0
         }
         await this.accountRepository.create({
             doc: account,

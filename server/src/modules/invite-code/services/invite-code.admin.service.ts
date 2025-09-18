@@ -8,6 +8,7 @@ import { Pagination, QueryValue } from "@Package/api";
 import { InviteCodeStatus } from "../types";
 import { ErrorCode } from "@Common/error";
 import { UpdateInviteCodeStatusDto } from "@Modules/auth/api/dto/request";
+import { Types } from "mongoose";
 
 @Injectable()
 export class InviteCodeAdminService {
@@ -17,11 +18,24 @@ export class InviteCodeAdminService {
         private readonly inviteCodeError: InviteCodeError
     ){}
 
-    async createInviteCode(body: CreateInviteCodeDto){
+    async createInviteCode(body: CreateInviteCodeDto, createdBy: string){
         const inviteCode = await this.generateInviteCode()
         await this.positionService.findOne({id: body.position})
-        await this.inviteCodeRepo.create({doc: {...body, code: inviteCode} as any})
-        return
+
+        const result = await this.inviteCodeRepo.create({
+            doc: {
+                ...body,
+                code: inviteCode,
+                createdBy: new Types.ObjectId(createdBy),
+                status: InviteCodeStatus.Active
+            } as any
+        })
+
+        return {
+            code: inviteCode,
+            message: "Invite code created successfully",
+            data: result
+        }
     }
 
     async home(){

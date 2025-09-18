@@ -1,10 +1,10 @@
-import { Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { EnvironmentService } from "@Infrastructure/config";
 import { TokenConstant } from "@Common/auth/token.constant";
 
 @Injectable()
-export class RedisService implements OnModuleDestroy {
+export class RedisService implements OnModuleInit, OnModuleDestroy {
     private redis: Redis;
     private readonly logger = new Logger(RedisService.name);
 
@@ -14,8 +14,15 @@ export class RedisService implements OnModuleDestroy {
 
     }
 
+    async onModuleInit(): Promise<void> {
+        await this.connect();
+    }
+
     async checkConnection(): Promise<boolean> {
         try {
+            if (!this.redis) {
+                return false;
+            }
             await this.redis.ping()
             return true
         } catch (error) {
@@ -23,7 +30,7 @@ export class RedisService implements OnModuleDestroy {
         }
     }
     async connect(): Promise<void> {
-        if (await this.checkConnection()) {
+        if (this.redis && await this.checkConnection()) {
             return
         }
         this.redis = new Redis({
@@ -46,14 +53,21 @@ export class RedisService implements OnModuleDestroy {
         });
     }
     async set(key: string, value: any, ttl?: number): Promise<void> {
+        if (!this.redis || !(await this.checkConnection())) {
+            await this.connect();
+        }
         const val = typeof value === 'object' ? JSON.stringify(value) : value;
-        await this.redis.set(key, val);
         if (ttl) {
-            await this.redis.expire(key, ttl);
+            await this.redis.setex(key, ttl, val);
+        } else {
+            await this.redis.set(key, val);
         }
     }
 
     async get<T = any>(key: string): Promise<T | null> {
+        if (!this.redis || !(await this.checkConnection())) {
+            await this.connect();
+        }
         const val = await this.redis.get(key);
         try {
             return val ? JSON.parse(val) : null;
@@ -110,6 +124,90 @@ export class RedisService implements OnModuleDestroy {
         return {
             elements: result[1]
         }
+    }
+
+    // Additional Redis methods needed by authentication services
+    async incr(key: string): Promise<number> {
+        return this.redis.incr(key);
+    }
+
+    async decr(key: string): Promise<number> {
+        return this.redis.decr(key);
+    }
+
+    async sadd(key: string, ...members: string[]): Promise<number> {
+        return this.redis.sadd(key, ...members);
+    }
+
+    async srem(key: string, ...members: string[]): Promise<number> {
+        return this.redis.srem(key, ...members);
+    }
+
+    async smembers(key: string): Promise<string[]> {
+        return this.redis.smembers(key);
+    }
+
+    async scard(key: string): Promise<number> {
+        return this.redis.scard(key);
+    }
+
+    async keys(pattern: string): Promise<string[]> {
+        return this.redis.keys(pattern);
+    }
+
+    async expire(key: string, seconds: number): Promise<number> {
+        return this.redis.expire(key, seconds);
+    }
+
+    async ltrim(key: string, start: number, stop: number): Promise<string> {
+        return this.redis.ltrim(key, start, stop);
+    }
+
+    async setex(key: string, seconds: number, value: any): Promise<string> {
+        const val = typeof value === 'object' ? JSON.stringify(value) : value;
+        return this.redis.setex(key, seconds, val);
+    }
+
+    async setNX(key: string, value: any, ttl?: number): Promise<boolean> {
+        if (!this.redis || !(await this.checkConnection())) {
+            await this.connect();
+        }
+        const val = typeof value === 'object' ? JSON.stringify(value) : value;
+
+        if (ttl) {
+            // Use SET with NX and EX options
+            const result = await this.redis.set(key, val, 'EX', ttl, 'NX');
+            return result === 'OK';
+        } else {
+            // Use SETNX for no expiration
+            const result = await this.redis.setnx(key, val);
+            return result === 1;
+        }
+    }
+
+    async mget(...keys: string[]): Promise<(string | null)[]> {
+        return this.redis.mget(...keys);
+    }
+
+    async mset(keyValues: Record<string, any>): Promise<string> {
+        const flatArray: string[] = [];
+        for (const [key, value] of Object.entries(keyValues)) {
+            flatArray.push(key);
+            flatArray.push(typeof value === 'object' ? JSON.stringify(value) : value);
+        }
+        return this.redis.mset(...flatArray);
+    }
+
+    async flushall(): Promise<void> {
+        await this.redis.flushall();
+    }
+
+    pipeline() {
+        return this.redis.pipeline();
+    }
+
+    multi() {
+        return this.redis.multi();
     }
 
     onModuleDestroy() {

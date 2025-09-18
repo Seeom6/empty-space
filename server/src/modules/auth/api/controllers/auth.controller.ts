@@ -1,4 +1,4 @@
-import {Body, Post, Res, UseGuards } from '@nestjs/common';
+import {Body, Post, Res, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from '@Modules/auth';
 import { LogInDto } from '../dto/request/logIn.dto';
 import {IRefreshToken} from 'src/package/auth';
@@ -6,7 +6,7 @@ import {RefreshTokenGuard} from "@Package/auth/guards";
 import {RefreshPayload} from "@Package/api/decorators/refresh-payload.decorator";
 import { Account, AccountPayload, AuthWebController, WebController } from '@Package/api';
 import { SingInDto } from '../dto/request/singIn.dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { RedisKeys } from '@Common/cache';
 import { SendOtpDto } from '../dto/request';
 
@@ -45,10 +45,10 @@ export class AuthController {
 
    @Post('log-in')
    async logIn(@Body() logInInfo: LogInDto, @Res({passthrough: true}) res: Response ) {
-      const tokens = await this.authService.logIn(logInInfo);
-      res.cookie(RedisKeys.REFRESH_TOKEN, tokens.refreshToken, {httpOnly: true});
+      const result = await this.authService.logIn(logInInfo, res);
       return {
-         accessToken: tokens.refreshToken
+         data: result,
+         message: 'Login successful'
       }
    }
 
@@ -97,18 +97,30 @@ export class RefreshController {
    ){}
 
    @Post('refresh')
-   async refreshToken(@RefreshPayload() payload: IRefreshToken, @Res({passthrough: true}) res:  Response) {
-      const tokens = await this.authService.refreshToken(payload, res)
-      res.cookie(RedisKeys.REFRESH_TOKEN, tokens.refreshToken, {httpOnly: true});
+   async refreshToken(@Req() req: Request, @Res({passthrough: true}) res: Response) {
+      const refreshToken = req.cookies?.refreshToken;
+      if (!refreshToken) {
+         throw new Error('Refresh token not found');
+      }
+
+      const result = await this.authService.refreshToken(refreshToken, res);
       return {
-         accessToken: tokens.accessToken
+         data: result,
+         message: 'Token refreshed successfully'
       }
    }
 
    @Post("log-out")
-   async logout(@RefreshPayload() payload: IRefreshToken, @Res({passthrough: true}) res: Response){
-      res.cookie(RedisKeys.REFRESH_TOKEN, null);
-      return;
+   async logout(@Req() req: Request, @Res({passthrough: true}) res: Response){
+      const refreshToken = req.cookies?.refreshToken;
+      if (!refreshToken) {
+         // No token to logout, just clear cookies
+         res.clearCookie('accessToken');
+         res.clearCookie('refreshToken');
+         return { message: 'Logged out successfully' };
+      }
+
+      return await this.authService.logOut(refreshToken, res);
    }
 }
 

@@ -9,19 +9,22 @@ export class LocalFile {
   filename: string;
 
   @Prop({ type: String, required: true })
+  path: string;
+
+  @Prop({ type: String, required: true })
   mimetype: string;
 
-  @Prop({ type: String, required: true })
-  key: string;
+  @Prop({ type: Number, required: true })
+  size: number;
 
-  @Prop({ type: String, required: true })
-  originalFilename: string;
+  @Prop({ type: String })
+  originalName?: string;
 
-  @Prop({ type: String, required: true })
-  relativePath: string;
+  @Prop({ type: String })
+  encoding?: string;
 
-  @Prop({ type: String, required: true })
-  extension: string;
+  @Prop({ type: String })
+  url?: string;
 }
 
 export const LocalFileSchema = SchemaFactory.createForClass(LocalFile);
