@@ -71,16 +71,6 @@ export const PositionsManagement: React.FC<PositionsManagementProps> = ({
   // Permissions
   const permissions = getPositionPermissions(userRole)
 
-  // Debug logging to check data flow
-  console.log('🏗️ PositionsManagement render:', {
-    positionsCount: positions.length,
-    positions: positions.slice(0, 2),
-    isLoading,
-    error,
-    viewMode,
-    departmentsCount: departments?.length || 0
-  })
-
   // Event handlers
   const handlePositionClick = useCallback((position: Position) => {
     openViewModal(position)

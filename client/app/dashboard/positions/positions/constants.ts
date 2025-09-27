@@ -26,6 +26,13 @@ export const POSITION_NAME_MAX_LENGTH = 255
 
 // Role-based Access
 export const POSITION_ROLE_PERMISSIONS = {
+  // Backend uses lowercase with underscores
+  super_admin: ['position:view', 'position:create', 'position:edit', 'position:delete'],
+  admin: ['position:view', 'position:create', 'position:edit', 'position:delete'],
+  employee: ['position:view'],
+  operator: ['position:view', 'position:create', 'position:edit'],
+
+  // Legacy uppercase support for compatibility
   SUPER_ADMIN: ['position:view', 'position:create', 'position:edit', 'position:delete'],
   ADMIN: ['position:view', 'position:create', 'position:edit', 'position:delete'],
   EMPLOYEE: ['position:view'],

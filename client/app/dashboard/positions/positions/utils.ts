@@ -55,12 +55,7 @@ export const calculatePositionStats = (
   positions: Position[],
   departments: Department[] = []
 ): PositionStats => {
-  console.log('📊 calculatePositionStats called with:', {
-    positionsCount: positions.length,
-    departmentsCount: departments.length,
-    positions: positions.slice(0, 2),
-    departments: departments.slice(0, 2)
-  })
+
 
   const activePositions = positions.filter(position => !position.isDeleted)
 
@@ -83,17 +78,14 @@ export const calculatePositionStats = (
     })
   } else {
     // If no departments provided, group by departmentId
-    console.log('📊 No departments provided, grouping by departmentId')
     const departmentCounts: Record<string, number> = {}
     activePositions.forEach(position => {
       const deptId = position.departmentId
       departmentCounts[deptId] = (departmentCounts[deptId] || 0) + 1
     })
     stats.departments = departmentCounts
-    console.log('📊 Department counts by ID:', departmentCounts)
   }
 
-  console.log('📊 Final stats:', stats)
   return stats
 }
 
@@ -215,18 +207,24 @@ export const validatePositionForm = (data: {
   name: string
   departmentId: string
   description?: string
+  status?: string
 }): Record<string, string> => {
   const errors: Record<string, string> = {}
-  
+
   const nameError = validatePositionName(data.name)
   if (nameError) errors.name = nameError
-  
+
   const departmentError = validateDepartmentId(data.departmentId)
   if (departmentError) errors.departmentId = departmentError
-  
+
   const descriptionError = validatePositionDescription(data.description)
   if (descriptionError) errors.description = descriptionError
-  
+
+  // Validate status if provided
+  if (data.status && !['ACTIVE', 'INACTIVE'].includes(data.status)) {
+    errors.status = 'Status must be either ACTIVE or INACTIVE'
+  }
+
   return errors
 }
 

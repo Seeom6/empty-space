@@ -23,17 +23,12 @@ export class PositionService {
       apiClient.get<any>(PositionService.BASE_PATH)
     );
 
-    console.log('🔍 PositionService.getAll response:', response);
-
     // Handle both direct array and wrapped response
     if (Array.isArray(response)) {
-      console.log('📋 Response is direct array:', response.length);
       return response;
     } else if (response && Array.isArray(response.data)) {
-      console.log('📋 Response is wrapped, extracting data:', response.data.length);
       return response.data;
     } else {
-      console.log('❌ Unexpected response format:', response);
       return [];
     }
   }
@@ -47,9 +42,18 @@ export class PositionService {
       throw new Error('Position ID is required');
     }
 
-    return apiRequest(() =>
-      apiClient.get<PositionWithDepartment>(`${PositionService.BASE_PATH}/${id}`)
+    const response = await apiRequest(() =>
+      apiClient.get<any>(`${PositionService.BASE_PATH}/${id}`)
     );
+
+    // Handle wrapped response format
+    if (response && response.data) {
+      return response.data;
+    } else if (response && response.id) {
+      return response;
+    } else {
+      throw new Error('Invalid response format from server');
+    }
   }
 
   /**
@@ -60,9 +64,20 @@ export class PositionService {
     // Validate required fields
     PositionService.validateCreateRequest(data);
 
-    return apiRequest(() =>
-      apiClient.post<Position>(PositionService.BASE_PATH, data)
+    const response = await apiRequest(() =>
+      apiClient.post<any>(PositionService.BASE_PATH, data)
     );
+
+    // Handle backend inconsistency: create returns {} instead of {data: Position}
+    // Return a mock position object for UI consistency
+    return {
+      id: 'temp-' + Date.now(), // Temporary ID until refresh
+      name: data.name,
+      departmentId: data.departmentId,
+      description: data.description || '',
+      status: data.status || 'ACTIVE',
+      isDeleted: false
+    };
   }
 
   /**
@@ -77,9 +92,18 @@ export class PositionService {
     // Validate required fields
     PositionService.validateUpdateRequest(data);
 
-    return apiRequest(() =>
-      apiClient.put<Position>(`${PositionService.BASE_PATH}/${id}`, data)
+    const response = await apiRequest(() =>
+      apiClient.put<any>(`${PositionService.BASE_PATH}/${id}`, data)
     );
+
+    // Handle wrapped response format
+    if (response && response.data) {
+      return response.data;
+    } else if (response && response.id) {
+      return response;
+    } else {
+      throw new Error('Invalid response format from server');
+    }
   }
 
   /**
@@ -90,10 +114,19 @@ export class PositionService {
     if (!id) {
       throw new Error('Position ID is required');
     }
-    
-    return apiRequest(() =>
-      apiClient.delete<Position>(`${PositionService.BASE_PATH}/${id}`)
+
+    const response = await apiRequest(() =>
+      apiClient.delete<any>(`${PositionService.BASE_PATH}/${id}`)
     );
+
+    // Handle wrapped response format
+    if (response && response.data) {
+      return response.data;
+    } else if (response && response.id) {
+      return response;
+    } else {
+      throw new Error('Invalid response format from server');
+    }
   }
 
   /**
@@ -222,15 +255,11 @@ export class PositionService {
     inactive: number;
     byDepartment: Record<string, number>;
   }> {
-    console.log('🌐 PositionService.getStatistics called');
-
     try {
       const positions = await PositionService.getAll();
-      console.log('📊 All positions for stats:', positions);
 
       // Ensure positions is an array
       if (!Array.isArray(positions)) {
-        console.log('❌ Positions is not an array:', positions);
         return {
           total: 0,
           active: 0,
@@ -240,7 +269,6 @@ export class PositionService {
       }
 
       const activePositions = positions.filter(position => !position.isDeleted);
-      console.log('📊 Active positions for stats:', activePositions);
 
       // Count by department
       const byDepartment: Record<string, number> = {};
@@ -255,10 +283,8 @@ export class PositionService {
         byDepartment,
       };
 
-      console.log('📊 Final position statistics:', stats);
       return stats;
     } catch (error) {
-      console.error('❌ Failed to get position statistics:', error);
       return {
         total: 0,
         active: 0,

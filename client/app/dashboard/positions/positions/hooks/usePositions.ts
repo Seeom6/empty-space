@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
-import PositionService from '@/lib/api/services/positionService'
-import DepartmentService from '@/lib/api/services/departmentService'
+import { PositionService } from '@/lib/api/services/positionService'
+import { DepartmentService } from '@/lib/api/services/departmentService'
 import {
   Position,
   PositionWithDepartment,
@@ -41,10 +41,7 @@ export const usePositions = () => {
   } = useQuery({
     queryKey: POSITION_QUERY_KEYS.ALL,
     queryFn: async () => {
-      console.log('🚀 Fetching positions from API...')
       const result = await PositionService.getAll()
-      console.log('📦 Raw API Response:', result)
-      console.log('📊 Positions count:', Array.isArray(result) ? result.length : 'Not an array')
       return result
     },
     staleTime: POSITION_CACHE_TIMES.STALE_TIME,
@@ -77,23 +74,15 @@ export const usePositions = () => {
 
   // Convert API positions to dashboard format
   const positions = useMemo(() => {
-    console.log('🔄 Processing API positions:', apiPositions)
-
     if (!apiPositions || !Array.isArray(apiPositions)) {
-      console.log('❌ No positions data or not an array:', apiPositions)
       return []
     }
-
-    console.log('📋 Raw positions before filtering:', apiPositions.length)
 
     const filtered = apiPositions.filter((position: any) => {
       // If isDeleted field exists, filter by it, otherwise include all
       const shouldInclude = position.isDeleted === undefined || !position.isDeleted
-      console.log(`🔍 Position ${position.name}: isDeleted=${position.isDeleted}, include=${shouldInclude}`)
       return shouldInclude
     })
-
-    console.log('📋 Positions after filtering:', filtered.length)
 
     const transformed = filtered.map((position: any) => ({
       id: position.id || position._id,
@@ -106,7 +95,6 @@ export const usePositions = () => {
       updatedAt: position.updatedAt
     }))
 
-    console.log('✅ Final transformed positions:', transformed)
     return transformed
   }, [apiPositions])
 
@@ -145,7 +133,25 @@ export const usePositions = () => {
       toast.success('Position created successfully!')
     },
     onError: (error: any) => {
-      const errorMessage = error.message || 'Failed to create position. Please try again.'
+      // Handle specific API error codes
+      let errorMessage = 'Failed to create position. Please try again.'
+
+      if (error.response?.data?.error) {
+        const apiError = error.response.data.error
+        switch (apiError.code) {
+          case 11001:
+            errorMessage = 'A position with this name already exists. Please choose a different name.'
+            break
+          case 10000:
+            errorMessage = 'The selected department was not found. Please select a valid department.'
+            break
+          default:
+            errorMessage = apiError.message || errorMessage
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
       toast.error(errorMessage)
       setError(errorMessage)
     }
@@ -161,7 +167,28 @@ export const usePositions = () => {
       toast.success('Position updated successfully!')
     },
     onError: (error: any) => {
-      const errorMessage = error.message || 'Failed to update position. Please try again.'
+      // Handle specific API error codes
+      let errorMessage = 'Failed to update position. Please try again.'
+
+      if (error.response?.data?.error) {
+        const apiError = error.response.data.error
+        switch (apiError.code) {
+          case 11000:
+            errorMessage = 'Position not found. It may have been deleted by another user.'
+            break
+          case 11001:
+            errorMessage = 'A position with this name already exists. Please choose a different name.'
+            break
+          case 10000:
+            errorMessage = 'The selected department was not found. Please select a valid department.'
+            break
+          default:
+            errorMessage = apiError.message || errorMessage
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
       toast.error(errorMessage)
       setError(errorMessage)
     }
@@ -176,7 +203,22 @@ export const usePositions = () => {
       toast.success('Position deleted successfully!')
     },
     onError: (error: any) => {
-      const errorMessage = error.message || 'Failed to delete position. Please try again.'
+      // Handle specific API error codes
+      let errorMessage = 'Failed to delete position. Please try again.'
+
+      if (error.response?.data?.error) {
+        const apiError = error.response.data.error
+        switch (apiError.code) {
+          case 11000:
+            errorMessage = 'Position not found. It may have already been deleted.'
+            break
+          default:
+            errorMessage = apiError.message || errorMessage
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
       toast.error(errorMessage)
       setError(errorMessage)
     }
