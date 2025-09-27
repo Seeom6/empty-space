@@ -13,7 +13,7 @@ export default function RootLayout({
     const [userRole] = useState('Admin') // Set default role, can be managed by auth system
 
     return (
-        // <ProtectedRoute>
+        <ProtectedRoute>
             <div className="flex h-screen bg-background">
                 {/* Sidebar */}
                 <Sidebar
@@ -40,6 +40,6 @@ export default function RootLayout({
                     />
                 )}
             </div>
-        // </ProtectedRoute>
+        </ProtectedRoute>
     )
 }

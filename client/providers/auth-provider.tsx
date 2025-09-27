@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
+  authCheckCompleted: boolean
 
   // New 4-step registration flow
   validateInviteCode: (inviteCode: string) => Promise<any>
@@ -54,6 +55,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [passwordResetEmail, setPasswordResetEmail] = useState<string>('')
+  const [authCheckCompleted, setAuthCheckCompleted] = useState(false)
   const router = useRouter()
 
   const isAuthenticated = !!user
@@ -61,14 +64,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check if user is authenticated on mount (now cookie-based)
   useEffect(() => {
     const checkAuth = async () => {
-      // Check if user is authenticated via cookies only
-      const isAuthenticatedViaCookies = AuthService.isAuthenticatedViaCookies()
+      console.log('🔍 AUTH PROVIDER: Checking authentication on mount/refresh');
 
-      if (isAuthenticatedViaCookies) {
-        await refreshUser()
-      } else {
-        setIsLoading(false)
-      }
+      // Always try to refresh user data on mount/refresh
+      // This handles both readable cookies and HTTP-only cookies
+      // If the user is authenticated, the API call will succeed
+      // If not, it will fail and we'll clear the auth state
+      await refreshUser()
     }
 
     checkAuth()
@@ -77,21 +79,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // RefreshUser function - now supports cookie-based authentication
   const refreshUser = async () => {
     try {
+      console.log('🔄 AUTH PROVIDER: Attempting to refresh user data...');
+
       // Try to get user info using cookie authentication
       const userResponse = await AuthService.me()
-      setUser(userResponse.data.user)
+      console.log('✅ AUTH PROVIDER: Successfully got user data from API:', userResponse);
+
+      // Extract user data from the correct nested structure
+      // Response structure: { data: { data: { user: {...} }, message: "..." } }
+      const user = userResponse.data?.data?.user;
+      console.log('🔍 AUTH PROVIDER: Raw user data before normalization:', user)
+
+      if (user && user.accountRole) {
+        const normalizedRole = AuthService.normalizeRole(user.accountRole)
+        console.log('🔄 AUTH PROVIDER: Role normalization:', {
+          original: user.accountRole,
+          normalized: normalizedRole
+        })
+        user.accountRole = normalizedRole as any
+      }
+
+      console.log('🔄 AUTH PROVIDER: Setting user in state:', user)
+      setUser(user)
+      console.log('✅ AUTH PROVIDER: User authentication restored successfully');
     } catch (error: any) {
-      // If endpoint doesn't exist (404) or other auth errors, clear cookies
-      if (error.response?.status === 404 || error.response?.status === 401) {
+      console.error('❌ AUTH PROVIDER: Failed to refresh user:', error)
+      console.error('❌ AUTH PROVIDER: Error status:', error.response?.status)
+      console.error('❌ AUTH PROVIDER: Error message:', error.response?.data?.message || error.message)
+
+      // Handle different error types appropriately
+      const status = error.response?.status
+      const errorMessage = error.response?.data?.message || error.message
+
+      if (status === 400 && errorMessage?.includes('Access token not exist')) {
+        // Expected behavior when user is not authenticated - don't clear cookies unnecessarily
+        console.log('🔍 AUTH PROVIDER: No valid authentication found (expected when not logged in)');
+        setUser(null)
+      } else if (status === 401 || status === 403) {
+        // Unauthorized or forbidden - clear cookies and redirect
+        console.log('🧹 AUTH PROVIDER: Clearing auth state due to 401/403 error');
+        clearAuthCookies()
+        setUser(null)
+      } else if (status === 404) {
+        // Endpoint not found - this shouldn't happen but handle gracefully
+        console.log('🧹 AUTH PROVIDER: API endpoint not found - clearing auth state');
         clearAuthCookies()
         setUser(null)
       } else {
-        // For other errors, still clear auth state
-        clearAuthCookies()
+        // Network errors, server errors, etc. - don't clear cookies, just set user to null
+        console.log('🔍 AUTH PROVIDER: Network or server error - keeping cookies but clearing user state');
         setUser(null)
       }
     } finally {
+      console.log('🏁 AUTH PROVIDER: Finished refresh user process, setting loading to false');
       setIsLoading(false)
+      setAuthCheckCompleted(true)
     }
   }
 
@@ -173,14 +215,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true)
 
       const response = await AuthService.login(credentials)
+      console.log('Auth provider received login response:', response)
 
       // Set the user from the response
-      setUser(response.data.user)
-
-      toast.success('Login successful!')
-      router.push('/dashboard')
+      if (response.data && response.data.user) {
+        setUser(response.data.user)
+        toast.success('Login successful!')
+        router.push('/dashboard')
+      } else {
+        throw new Error('Invalid response format: missing user data')
+      }
     } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Login failed'
+      console.error('Login error:', error)
+
+      // Handle different error response formats
+      let message = 'Login failed'
+
+      if (error.response?.data?.error?.message) {
+        message = error.response.data.error.message
+      } else if (error.response?.data?.message) {
+        message = error.response.data.message
+      } else if (error.message) {
+        message = error.message
+      }
+
       toast.error(message)
       throw error
     } finally {
@@ -219,7 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (userError) {
         // If /auth/me doesn't exist, create a minimal user object
         setUser({
-          accountId: 'new_user',
+          id: 'new_user',  // Changed from accountId to id
           accountRole: data.accountRole || 'user',
           isActive: true,
           email: '', // Phone-based registration doesn't have email initially
@@ -312,6 +370,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const requestPasswordReset = async (email: string) => {
     try {
       setIsLoading(true)
+      setPasswordResetEmail(email)
 
       await AuthService.requestPasswordReset({ email })
 
@@ -329,7 +388,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true)
 
-      await AuthService.verifyPasswordResetOTP({ otp })
+      await AuthService.verifyPasswordResetOTP({ email: passwordResetEmail, otp })
 
       toast.success('OTP verified successfully!')
     } catch (error: any) {
@@ -383,6 +442,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     isAuthenticated,
     isLoading,
+    authCheckCompleted,
 
     // New 4-step registration flow
     validateInviteCode,

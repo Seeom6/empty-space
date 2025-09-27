@@ -45,7 +45,7 @@ export class PositionAdminService {
             if(isExist) throw this.positionError.throw(ErrorCode.POSITION_EXIST);
         }
         await this.departmentService.findOne({id:body.departmentId});
-        return await this.positionRepo.findOneAndUpdate({filter:{_id:paramsId.id},update:{...body, status: PositionStatus.ACTIVE} as any, error:this.positionError.error(ErrorCode.POSITION_NOT_FOUND)});
+        return await this.positionRepo.findOneAndUpdate({filter:{_id:paramsId.id},update:{ $set: body } as any, error:this.positionError.error(ErrorCode.POSITION_NOT_FOUND)});
     }
 
     async remove(paramsId: IParamsId){

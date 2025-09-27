@@ -1,0 +1,528 @@
+{
+  "info": {
+    "name": "Department API - HR Management System",
+    "description": "Complete API collection for Department CRUD operations in the HR Management System. Includes authentication, validation, and error handling scenarios.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:12001/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "departmentId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-login if no token exists",
+          "if (!pm.environment.get('adminToken') && !pm.collectionVariables.get('adminToken')) {",
+          "    console.log('No admin token found, attempting auto-login...');",
+          "    ",
+          "    const loginRequest = {",
+          "        url: pm.collectionVariables.get('baseUrl') + '/admin/auth/login',",
+          "        method: 'POST',",
+          "        header: {",
+          "            'Content-Type': 'application/json'",
+          "        },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                email: 'admin@example.com',",
+          "                password: 'admin123'",
+          "            })",
+          "        }",
+          "    };",
+          "    ",
+          "    pm.sendRequest(loginRequest, (err, response) => {",
+          "        if (err) {",
+          "            console.log('Auto-login failed:', err);",
+          "        } else if (response.code === 200) {",
+          "            const responseJson = response.json();",
+          "            if (responseJson.access_token) {",
+          "                pm.collectionVariables.set('adminToken', responseJson.access_token);",
+          "                console.log('Auto-login successful, token set');",
+          "            }",
+          "        } else {",
+          "            console.log('Auto-login failed with status:', response.code);",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has access token', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('access_token');",
+                  "    ",
+                  "    // Store token for subsequent requests",
+                  "    pm.collectionVariables.set('adminToken', responseJson.access_token);",
+                  "});",
+                  "",
+                  "pm.test('Response has user information', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('user');",
+                  "    pm.expect(responseJson.user).to.have.property('email');",
+                  "    pm.expect(responseJson.user).to.have.property('accountRole');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "auth", "login"]
+            },
+            "description": "Login as admin to get access token for department operations"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Department CRUD Operations",
+      "item": [
+        {
+          "name": "Get All Departments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has data array', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "    pm.expect(responseJson.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Department objects have required fields', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.data.length > 0) {",
+                  "        const department = responseJson.data[0];",
+                  "        pm.expect(department).to.have.property('id');",
+                  "        pm.expect(department).to.have.property('name');",
+                  "        pm.expect(department).to.have.property('status');",
+                  "        ",
+                  "        // Store first department ID for other tests",
+                  "        pm.collectionVariables.set('departmentId', department.id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/department",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department"]
+            },
+            "description": "Retrieve all active departments in the system"
+          }
+        },
+        {
+          "name": "Create Department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test('Response has data property', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "});",
+                  "",
+                  "// Set a timestamp for unique department names",
+                  "const timestamp = Date.now();",
+                  "pm.collectionVariables.set('timestamp', timestamp);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Generate unique department name",
+                  "const timestamp = Date.now();",
+                  "pm.collectionVariables.set('uniqueDeptName', 'Test Department ' + timestamp);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{uniqueDeptName}}\",\n  \"description\": \"Test department created via Postman\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/department",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department"]
+            },
+            "description": "Create a new department with unique name"
+          }
+        },
+        {
+          "name": "Get Department by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has department data', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "    pm.expect(responseJson.data).to.have.property('_id');",
+                  "    pm.expect(responseJson.data).to.have.property('name');",
+                  "    pm.expect(responseJson.data).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/department/{{departmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department", "{{departmentId}}"]
+            },
+            "description": "Get a specific department by ID (uses departmentId from Get All Departments)"
+          }
+        },
+        {
+          "name": "Update Department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has data property', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{uniqueDeptName}} - Updated\",\n  \"description\": \"Updated test department description\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/department/{{departmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department", "{{departmentId}}"]
+            },
+            "description": "Update an existing department"
+          }
+        },
+        {
+          "name": "Delete Department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has data property', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/department/{{departmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department", "{{departmentId}}"]
+            },
+            "description": "Soft delete a department (sets isDeleted to true)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Scenarios",
+      "item": [
+        {
+          "name": "Create Department - Duplicate Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error response has correct structure', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('error');",
+                  "    pm.expect(responseJson.error).to.have.property('code');",
+                  "    pm.expect(responseJson.error).to.have.property('message');",
+                  "    pm.expect(responseJson.error.code).to.equal(10001);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering\",\n  \"description\": \"Duplicate department name test\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/department",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department"]
+            },
+            "description": "Test creating department with duplicate name (should fail)"
+          }
+        },
+        {
+          "name": "Create Department - Validation Error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Validation error response', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('error');",
+                  "    pm.expect(responseJson.error.code).to.equal(70000);",
+                  "    pm.expect(responseJson.error.type).to.equal('VALIDATION_ERROR');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AB\",\n  \"description\": \"Name too short\",\n  \"status\": \"INVALID_STATUS\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/department",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department"]
+            },
+            "description": "Test validation error with short name and invalid status"
+          }
+        },
+        {
+          "name": "Get Department - Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404 or 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                  "});",
+                  "",
+                  "pm.test('Department not found error', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('error');",
+                  "    pm.expect(responseJson.error.code).to.equal(10000);",
+                  "    pm.expect(responseJson.error.message).to.include('Department not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/department/507f1f77bcf86cd799439999",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department", "507f1f77bcf86cd799439999"]
+            },
+            "description": "Test getting non-existent department"
+          }
+        },
+        {
+          "name": "Unauthorized Access",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Unauthorized error response', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('error');",
+                  "    pm.expect(responseJson.error.code).to.equal(4009);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/department",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "department"]
+            },
+            "description": "Test unauthorized access without token"
+          }
+        }
+      ]
+    }
+  ]
+}

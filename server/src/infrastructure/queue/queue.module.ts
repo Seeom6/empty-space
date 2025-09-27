@@ -17,6 +17,12 @@ import { SystemQueue } from "./queues";
                         host: host,
                         port: port,
                         db: databaseIndex,
+                        connectTimeout: 5000,
+                        lazyConnect: true,
+                        retryDelayOnFailover: 100,
+                        maxRetriesPerRequest: 3,
+                        retryDelayOnClusterDown: 300,
+                        enableOfflineQueue: false,
                     },
                     defaultJobOptions: {
                         removeOnComplete: 100,

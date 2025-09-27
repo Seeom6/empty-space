@@ -1,14 +1,19 @@
 import React from 'react';
+import { Button } from './button';
 
 interface ErrorAlertProps {
+  title?: string;
   message: string;
   onClose?: () => void;
+  onRetry?: () => void;
   className?: string;
 }
 
 export const ErrorAlert: React.FC<ErrorAlertProps> = ({
+  title = "Error",
   message,
   onClose,
+  onRetry,
   className = ''
 }) => {
   return (
@@ -30,8 +35,20 @@ export const ErrorAlert: React.FC<ErrorAlertProps> = ({
           </svg>
         </div>
         <div className="ml-3 flex-1">
-          <h3 className="text-sm font-medium text-red-800">Error</h3>
+          <h3 className="text-sm font-medium text-red-800">{title}</h3>
           <p className="mt-1 text-sm text-red-700">{message}</p>
+          {onRetry && (
+            <div className="mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRetry}
+                className="text-red-700 border-red-300 hover:bg-red-50"
+              >
+                Try Again
+              </Button>
+            </div>
+          )}
         </div>
         {onClose && (
           <div className="ml-auto pl-3">

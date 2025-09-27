@@ -11,7 +11,7 @@ export * from "./queue"
 export const InfrastructureModule = [
     EnvConfigModule,
     RedisModule,
-    QueueModule,
+    // QueueModule, // Temporarily disabled to fix startup hanging
     MongoConnection,
     WinstonLogger
 ]

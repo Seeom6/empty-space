@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom'
 
 // Import MSW server setup
-import './app/dashboard/technologies/technologies/__tests__/mocks/server'
+// import './app/dashboard/technologies/technologies/__tests__/mocks/server'
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({

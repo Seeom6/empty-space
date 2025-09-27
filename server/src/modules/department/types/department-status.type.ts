@@ -1,5 +1,5 @@
 
-export enum DepartmentStatus{
+export enum DepartmentStatus {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE"
 }

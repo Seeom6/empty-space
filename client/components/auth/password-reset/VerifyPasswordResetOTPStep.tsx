@@ -143,12 +143,12 @@ export function VerifyPasswordResetOTPStep({
       <div className="space-y-2">
         <Label htmlFor="otp">Verification Code</Label>
         <Input
-          ref={otpInputRef}
           id="otp"
           type="text"
           placeholder="123456"
-          {...register('otp')}
-          onChange={handleOTPChange}
+          {...register('otp', {
+            onChange: handleOTPChange
+          })}
           className={`text-center text-2xl tracking-widest ${errors.otp ? 'border-red-500' : ''}`}
           disabled={isLoading}
           autoComplete="one-time-code"

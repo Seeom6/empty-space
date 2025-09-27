@@ -91,6 +91,12 @@ const systemNavItems: SidebarItem[] = [
     roles: ['admin', 'hr'],
   },
   {
+    title: 'Departments',
+    href: '/dashboard/departments',
+    icon: Building2,
+    roles: ['admin', 'hr'],
+  },
+  {
     title: 'Technologies',
     href: '/dashboard/technologies',
     icon: Code,
@@ -269,9 +275,10 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     {!isCollapsed && (
                       <div className="flex-1">
                         <div className="truncate">{item.title}</div>
-                        {(item.title === 'Invitations' || item.title === 'Technologies' || item.title === 'Permissions') && (
+                        {(item.title === 'Invitations' || item.title === 'Departments' || item.title === 'Technologies' || item.title === 'Permissions') && (
                           <div className="text-xs text-slate-500 mt-0.5">
                             {item.title === 'Invitations' && 'Manage employee invite codes'}
+                            {item.title === 'Departments' && 'Organizational departments'}
                             {item.title === 'Technologies' && 'Company tech stack'}
                             {item.title === 'Permissions' && 'Role-based access control'}
                           </div>

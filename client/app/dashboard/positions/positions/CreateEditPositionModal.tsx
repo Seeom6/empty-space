@@ -83,7 +83,10 @@ export const CreateEditPositionModal: React.FC<CreateEditPositionModalProps> = (
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    // Prevent double submission
+    if (isLoading) return
+
     // Validate form
     const validationErrors = validatePositionForm(formData)
     if (Object.keys(validationErrors).length > 0) {

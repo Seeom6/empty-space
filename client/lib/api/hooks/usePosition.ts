@@ -244,29 +244,30 @@ export const usePositionNameExists = (name: string, excludeId?: string) => {
 
 /**
  * Hook for bulk status update
+ * TODO: Implement bulkUpdateStatus method in PositionService
  */
-export const useBulkUpdatePositionStatus = (
-  options?: UseMutationOptions<Position[], ApiError, { ids: string[]; status: 'ACTIVE' | 'INACTIVE' }>
-) => {
-  const queryClient = useQueryClient();
+// export const useBulkUpdatePositionStatus = (
+//   options?: UseMutationOptions<Position[], ApiError, { ids: string[]; status: 'ACTIVE' | 'INACTIVE' }>
+// ) => {
+//   const queryClient = useQueryClient();
 
-  return useMutation<Position[], ApiError, { ids: string[]; status: 'ACTIVE' | 'INACTIVE' }>({
-    mutationKey: [MutationKeys.UPDATE_POSITION, 'bulk'],
-    mutationFn: ({ ids, status }) => PositionService.bulkUpdateStatus(ids, status),
-    onSuccess: (data) => {
-      // Invalidate all position queries
-      queryClient.invalidateQueries({ queryKey: QueryKeys.POSITION_ALL });
-      
-      // Update individual position caches
-      data.forEach(position => {
-        queryClient.setQueryData(QueryKeys.POSITION_BY_ID(position.id), position);
-      });
-      
-      toast.success(`${data.length} positions updated successfully`);
-    },
-    onError: (error) => {
-      toast.error('Failed to update positions');
-    },
-    ...options,
-  });
-};
+//   return useMutation<Position[], ApiError, { ids: string[]; status: 'ACTIVE' | 'INACTIVE' }>({
+//     mutationKey: [MutationKeys.UPDATE_POSITION, 'bulk'],
+//     mutationFn: ({ ids, status }) => PositionService.bulkUpdateStatus(ids, status),
+//     onSuccess: (data) => {
+//       // Invalidate all position queries
+//       queryClient.invalidateQueries({ queryKey: QueryKeys.POSITION_ALL });
+
+//       // Update individual position caches
+//       data.forEach(position => {
+//         queryClient.setQueryData(QueryKeys.POSITION_BY_ID(position.id), position);
+//       });
+
+//       toast.success(`${data.length} positions updated successfully`);
+//     },
+//     onError: (error) => {
+//       toast.error('Failed to update positions');
+//     },
+//     ...options,
+//   });
+// };

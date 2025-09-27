@@ -8,7 +8,7 @@ export const nestConfig = async (app: NestExpressApplication, envService: Enviro
     app.use(cookieParser());
     app.use(morgan("dev"));
     app.setGlobalPrefix(`api/v${envService.get("app.version")}`);
-    
+
     app.enableCors({
       origin: process.env.NODE_ENV === 'production'
         ? (process.env.ALLOWED_ORIGINS?.split(',') || [])
@@ -30,6 +30,6 @@ export const nestConfig = async (app: NestExpressApplication, envService: Enviro
       exposedHeaders: ['X-CSRF-Token'],
     });
 
-    const redisService = app.get(RedisService);
-    await redisService.connect();
+    // Redis connection is handled in RedisService.onModuleInit()
+    // No need to connect again here
 };

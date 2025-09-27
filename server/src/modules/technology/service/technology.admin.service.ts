@@ -39,7 +39,7 @@ export class TechnologyServiceAdmin {
             const isExist = await this.technologyRepo.findOne({filter:{name:body.name}});
             if(isExist) throw this.technologyError.throw(ErrorCode.TECHNOLOGY_EXIST);
         }
-        return await this.technologyRepo.findOneAndUpdate({filter:{_id:paramsId.id},update:{...body, status: TechnologyStatus.ACTIVE}});
+        return await this.technologyRepo.findOneAndUpdate({filter:{_id:paramsId.id},update:{ $set: body }});
     }
 
     async remove(paramsId: IParamsId){

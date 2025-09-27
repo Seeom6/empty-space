@@ -1,0 +1,643 @@
+{
+  "info": {
+    "name": "Position Management API",
+    "description": "Complete API collection for Position Management System with authentication, CRUD operations, and error handling examples.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set base URL if not already set",
+          "if (!pm.environment.get('baseUrl')) {",
+          "    pm.environment.set('baseUrl', 'http://localhost:12001/api/v1');",
+          "}",
+          "",
+          "// Set sample department ID if not set",
+          "if (!pm.environment.get('departmentId')) {",
+          "    pm.environment.set('departmentId', '68ac136e829a31a5c055f8d2');",
+          "}",
+          "",
+          "// Set sample position ID if not set",
+          "if (!pm.environment.get('positionId')) {",
+          "    pm.environment.set('positionId', '68b45624667578f36f852dd1');",
+          "}",
+          "",
+          "// Note: Authentication is handled automatically via cookies",
+          "// Run the 'Admin Login' request first to set the accessToken cookie",
+          "// Postman will automatically include cookies in subsequent requests"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:12001/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "departmentId",
+      "value": "507f1f77bcf86cd799439012",
+      "type": "string"
+    },
+    {
+      "key": "positionId",
+      "value": "507f1f77bcf86cd799439011",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has access_token', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    ",
+                  "    // Store the token for other requests",
+                  "    pm.environment.set('accessToken', jsonData.access_token);",
+                  "});",
+                  "",
+                  "pm.test('Cookie is set', function () {",
+                  "    const cookies = pm.cookies.toObject();",
+                  "    // Cookie names are case-sensitive and may be lowercase",
+                  "    pm.expect(cookies).to.have.property('accesstoken');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@admin.com\",\n  \"password\": \"123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "auth", "login"]
+            },
+            "description": "Login to get JWT token. The token will be automatically stored in cookies and environment variable."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Position CRUD Operations",
+      "item": [
+        {
+          "name": "Get All Positions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has data array', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Position objects have required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.data.length > 0) {",
+                  "        const position = jsonData.data[0];",
+                  "        pm.expect(position).to.have.property('id');",
+                  "        pm.expect(position).to.have.property('name');",
+                  "        pm.expect(position).to.have.property('status');",
+                  "        pm.expect(position).to.have.property('departmentId');",
+                  "        pm.expect(position).to.have.property('isDeleted');",
+                  "        ",
+                  "        // Store first position ID for other tests",
+                  "        pm.environment.set('positionId', position.id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position"]
+            },
+            "description": "Retrieves all non-deleted positions from the system."
+          }
+        },
+        {
+          "name": "Get Position by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has position data with department', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data).to.have.property('name');",
+                  "    pm.expect(jsonData.data).to.have.property('status');",
+                  "    pm.expect(jsonData.data).to.have.property('department');",
+                  "});",
+                  "",
+                  "pm.test('Department name is populated', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.department).to.be.a('string');",
+                  "    pm.expect(jsonData.data.department.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/position/{{positionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position", "{{positionId}}"]
+            },
+            "description": "Retrieves a specific position by ID with populated department information."
+          }
+        },
+        {
+          "name": "Create Position",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has data property', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "});",
+                  "",
+                  "// Store created position for cleanup",
+                  "pm.environment.set('createdPositionId', 'will_be_set_by_get_all');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"DevOps Engineer\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"description\": \"Manages infrastructure and deployment pipelines\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position"]
+            },
+            "description": "Creates a new position with the provided details."
+          }
+        },
+        {
+          "name": "Update Position",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains updated position data', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('_id');",
+                  "    pm.expect(jsonData.data).to.have.property('name');",
+                  "});",
+                  "",
+                  "pm.test('Position name was updated', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.name).to.include('Senior');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Senior DevOps Engineer\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"description\": \"Leads infrastructure and deployment initiatives\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/position/{{positionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position", "{{positionId}}"]
+            },
+            "description": "Updates an existing position with new information."
+          }
+        },
+        {
+          "name": "Delete Position",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains deleted position data', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('_id');",
+                  "    pm.expect(jsonData.data).to.have.property('isDeleted');",
+                  "});",
+                  "",
+                  "pm.test('Position is marked as deleted', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.isDeleted).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/position/{{positionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position", "{{positionId}}"]
+            },
+            "description": "Soft deletes a position (marks as deleted but doesn't remove from database)."
+          }
+        }
+      ],
+      "description": "Complete CRUD operations for position management."
+    },
+    {
+      "name": "Error Handling & Validation",
+      "item": [
+        {
+          "name": "Create Position - Invalid Department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Error response has correct structure', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData.error).to.have.property('code');",
+                  "    pm.expect(jsonData.error).to.have.property('message');",
+                  "    pm.expect(jsonData.error).to.have.property('errorType');",
+                  "});",
+                  "",
+                  "pm.test('Error code is DEPARTMENT_NOT_FOUND', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.code).to.equal(10000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Position\",\n  \"departmentId\": \"507f1f77bcf86cd799439999\",\n  \"description\": \"Test position with invalid department\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position"]
+            },
+            "description": "Tests error handling when creating a position with non-existent department."
+          }
+        },
+        {
+          "name": "Create Position - Validation Error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Validation error response', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AB\",\n  \"departmentId\": \"invalid-id\",\n  \"status\": \"INVALID_STATUS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position"]
+            },
+            "description": "Tests validation errors with invalid data (name too short, invalid department ID, invalid status)."
+          }
+        },
+        {
+          "name": "Get Position - Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Error code is POSITION_NOT_FOUND', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.code).to.equal(11000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/position/507f1f77bcf86cd799439999",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position", "507f1f77bcf86cd799439999"]
+            },
+            "description": "Tests error handling when requesting a non-existent position."
+          }
+        },
+        {
+          "name": "Unauthorized Access",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('Error code is ACCESS_TOKEN_NOT_EXIST', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.code).to.equal('ACCESS_TOKEN_NOT_EXIST');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position"]
+            },
+            "description": "Tests authentication error when accessing without JWT token."
+          }
+        }
+      ],
+      "description": "Error handling and validation test cases."
+    },
+    {
+      "name": "Data Validation Tests",
+      "item": [
+        {
+          "name": "Create Position - Minimum Valid Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Position created with minimum data', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Minimal Position\",\n  \"departmentId\": \"{{departmentId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position"]
+            },
+            "description": "Tests creating a position with only required fields."
+          }
+        },
+        {
+          "name": "Create Position - Maximum Length Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Position created with long name', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"This is a very long position name that tests the maximum character limit for position names which should be exactly 255 characters long and this string is designed to test that specific validation rule in the system\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"description\": \"Testing maximum length validation\",\n  \"status\": \"INACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "position"]
+            },
+            "description": "Tests creating a position with maximum allowed name length."
+          }
+        }
+      ],
+      "description": "Data validation and edge case testing."
+    }
+  ],
+  "environment": {
+    "name": "Position API Environment",
+    "values": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:12001/api/v1",
+        "enabled": true
+      },
+      {
+        "key": "accessToken",
+        "value": "your_jwt_token_here",
+        "enabled": true
+      },
+      {
+        "key": "departmentId",
+        "value": "507f1f77bcf86cd799439012",
+        "enabled": true
+      },
+      {
+        "key": "positionId",
+        "value": "507f1f77bcf86cd799439011",
+        "enabled": true
+      }
+    ]
+  }
+}

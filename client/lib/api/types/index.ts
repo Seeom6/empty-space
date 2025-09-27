@@ -44,10 +44,18 @@ export interface UpdateTechnologyRequest {
 // Department System Types
 export interface Department {
   id: string;
+  _id?: string;
   name: string;
   description?: string;
   status: Status;
   isDeleted: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  meta?: {
+    canDelete: boolean;
+    canUpdate: boolean;
+    lastModified: Date;
+  };
 }
 
 export interface CreateDepartmentRequest {
@@ -57,7 +65,7 @@ export interface CreateDepartmentRequest {
 }
 
 export interface UpdateDepartmentRequest {
-  name: string;
+  name?: string;
   description?: string;
   status?: Status;
 }
@@ -70,6 +78,8 @@ export interface Position {
   description?: string;
   status: Status;
   isDeleted: boolean;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 export interface PositionWithDepartment {
@@ -92,6 +102,34 @@ export interface UpdatePositionRequest {
   departmentId: string;
   description?: string;
   status?: Status;
+}
+
+// Position API Response Types
+export interface PositionListResponse {
+  data: Position[];
+}
+
+export interface PositionDetailResponse {
+  data: PositionWithDepartment;
+}
+
+export interface PositionCreateResponse {
+  data?: Position | null;
+}
+
+export interface PositionUpdateResponse {
+  data: Position;
+}
+
+export interface PositionDeleteResponse {
+  data: Position;
+}
+
+export interface PositionStatistics {
+  total: number;
+  active: number;
+  inactive: number;
+  byDepartment: Record<string, number>;
 }
 
 // Error Response Types
@@ -232,7 +270,7 @@ export interface User {
 }
 
 // Position and Department Types for Registration
-export interface Position {
+export interface RegistrationPosition {
   id: string;
   name: string;
   department: {
@@ -256,7 +294,7 @@ export interface ValidateInviteCodeRequest {
 
 export interface ValidateInviteCodeResponse {
   data: {
-    position: Position;
+    position: RegistrationPosition;
     privileges: Privilege[];
   };
   message: string;

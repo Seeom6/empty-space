@@ -1,0 +1,21 @@
+{
+  "id": "security-alert",
+  "name": "Security Alert",
+  "subject": "Security Alert - {{companyName}}",
+  "category": "security",
+  "priority": 4,
+  "htmlTemplate": "\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Security Alert</title>\n</head>\n<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;\">\n    <div style=\"background: #fff3cd; border: 1px solid #ffeaa7; padding: 30px; border-radius: 10px;\">\n        <h1 style=\"color: #856404; text-align: center; margin-bottom: 30px;\">🔒 Security Alert</h1>\n        \n        <p style=\"font-size: 16px; margin-bottom: 20px;\">\n            Hello {{firstName}},\n        </p>\n        \n        <p style=\"font-size: 16px; margin-bottom: 20px;\">\n            We detected unusual activity on your {{companyName}} account.\n        </p>\n        \n        <div style=\"background: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f39c12;\">\n            <h3 style=\"margin-top: 0; color: #856404;\">Activity Details:</h3>\n            <p><strong>IP Address:</strong> {{ipAddress}}</p>\n            <p><strong>Location:</strong> {{location}}</p>\n            <p><strong>Device:</strong> {{deviceInfo}}</p>\n            <p><strong>Time:</strong> {{timestamp}}</p>\n        </div>\n        \n        <p style=\"font-size: 16px; margin-bottom: 20px;\">\n            If this was you, you can safely ignore this email. If you don't recognize this activity, please secure your account immediately.\n        </p>\n        \n        <p style=\"font-size: 14px; color: #7f8c8d;\">\n            For assistance, contact our support team at {{supportEmail}}.\n        </p>\n    </div>\n</body>\n</html>",
+  "textTemplate": "\nHello {{firstName}},\n\nWe detected unusual activity on your {{companyName}} account.\n\nActivity Details:\n- IP Address: {{ipAddress}}\n- Location: {{location}}\n- Device: {{deviceInfo}}\n- Time: {{timestamp}}\n\nIf this was you, you can safely ignore this email. If you don't recognize this activity, please secure your account immediately.\n\nFor assistance, contact our support team at {{supportEmail}}.\n\nBest regards,\n{{companyName}} Security Team\n",
+  "variables": [
+    "firstName",
+    "ipAddress",
+    "location",
+    "deviceInfo",
+    "timestamp",
+    "companyName",
+    "supportEmail"
+  ],
+  "isActive": true,
+  "createdAt": "2025-09-22T11:53:16.640Z",
+  "updatedAt": "2025-09-22T11:53:16.640Z"
+}

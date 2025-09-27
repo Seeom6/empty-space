@@ -94,13 +94,10 @@ export const useCreateDepartment = (
   return useMutation<Department, ApiError, CreateDepartmentRequest>({
     mutationKey: [MutationKeys.CREATE_DEPARTMENT],
     mutationFn: DepartmentService.create,
-    onSuccess: (data) => {
+    onSuccess: (newDepartment) => {
       // Invalidate and refetch department queries
       queryClient.invalidateQueries({ queryKey: QueryKeys.DEPARTMENT_ALL });
-      
-      // Add the new department to the cache
-      queryClient.setQueryData(QueryKeys.DEPARTMENT_BY_ID(data.id), data);
-      
+
       toast.success('Department created successfully');
     },
     onError: (error) => {
@@ -127,13 +124,11 @@ export const useUpdateDepartment = (
   return useMutation<Department, ApiError, { id: string; data: UpdateDepartmentRequest }>({
     mutationKey: [MutationKeys.UPDATE_DEPARTMENT],
     mutationFn: ({ id, data }) => DepartmentService.update(id, data),
-    onSuccess: (data, variables) => {
-      // Update the specific department in cache
-      queryClient.setQueryData(QueryKeys.DEPARTMENT_BY_ID(variables.id), data);
-      
+    onSuccess: (updatedDepartment, variables) => {
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: QueryKeys.DEPARTMENT_ALL });
-      
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DEPARTMENT_BY_ID(variables.id) });
+
       toast.success('Department updated successfully');
     },
     onError: (error) => {
@@ -228,16 +223,16 @@ export const useBulkUpdateDepartmentStatus = (
   return useMutation<Department[], ApiError, { ids: string[]; status: 'ACTIVE' | 'INACTIVE' }>({
     mutationKey: [MutationKeys.UPDATE_DEPARTMENT, 'bulk'],
     mutationFn: ({ ids, status }) => DepartmentService.bulkUpdateStatus(ids, status),
-    onSuccess: (data) => {
+    onSuccess: (updatedDepartments, variables) => {
       // Invalidate all department queries
       queryClient.invalidateQueries({ queryKey: QueryKeys.DEPARTMENT_ALL });
-      
-      // Update individual department caches
-      data.forEach(department => {
-        queryClient.setQueryData(QueryKeys.DEPARTMENT_BY_ID(department.id), department);
+
+      // Invalidate individual department caches
+      variables.ids.forEach(id => {
+        queryClient.invalidateQueries({ queryKey: QueryKeys.DEPARTMENT_BY_ID(id) });
       });
-      
-      toast.success(`${data.length} departments updated successfully`);
+
+      toast.success(`${variables.ids.length} departments updated successfully`);
     },
     onError: (error) => {
       toast.error('Failed to update departments');

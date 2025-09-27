@@ -1,16 +1,17 @@
 // Authentication Types based on API Documentation
 
 export interface User {
-  accountId: string;
+  id: string;  // Changed from accountId to match server response
   email: string;
   firstName: string;
   lastName: string;
   phoneNumber?: string;
   accountRole: AccountRole;
-  isActive: boolean;
+  isActive?: boolean;  // Made optional since server doesn't always return this
   isVerified: boolean;
   image?: string;
   birthday?: Date;
+  employee?: any;  // Added since server returns this field
 }
 
 export enum AccountRole {

@@ -41,17 +41,35 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
     try {
+      console.log('Attempting login with:', { email, password: '***' });
       await login({ email, password });
-      router.push('/dashboard');
+      // Navigation is handled by the auth provider
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed');
+      console.error('Login error in component:', error);
+
+      // Error toast is handled by the auth provider
+      // But we can add additional handling here if needed
+      let errorMessage = 'Login failed';
+
+      if (error.response?.data?.error?.message) {
+        errorMessage = error.response.data.error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Only show toast if auth provider didn't already show one
+      if (!error.message?.includes('Login successful')) {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }

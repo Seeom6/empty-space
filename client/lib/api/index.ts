@@ -23,8 +23,7 @@ export { TechnologyService } from './services/technologyService';
 export { DepartmentService } from './services/departmentService';
 export { PositionService } from './services/positionService';
 
-// Testing utilities (development only)
-export { testCookieAuthentication } from './test-auth-cookies';
+
 
 // React Query Hooks - Technology
 export {
@@ -65,7 +64,7 @@ export {
   useDeletePosition,
   useSearchPositions,
   usePositionNameExists,
-  useBulkUpdatePositionStatus,
+  // useBulkUpdatePositionStatus, // TODO: Implement bulkUpdateStatus method in PositionService
 } from './hooks/usePosition';
 
 // Re-export commonly used types for convenience

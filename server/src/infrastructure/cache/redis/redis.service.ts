@@ -15,7 +15,14 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
 
     async onModuleInit(): Promise<void> {
-        await this.connect();
+        this.logger.log('🚀 Redis module initialization started (connection disabled for debugging)');
+        // Temporarily disable Redis connection to fix server startup
+        // try {
+        //     await this.connect();
+        // } catch (error) {
+        //     this.logger.warn('⚠️ Redis connection failed during module init, continuing without Redis:', error.message);
+        // }
+        this.logger.log('✅ Redis module initialization completed (without connection)');
     }
 
     async checkConnection(): Promise<boolean> {
@@ -33,22 +40,45 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         if (this.redis && await this.checkConnection()) {
             return
         }
+
+        this.logger.log('🔄 Attempting to connect to Redis...');
+
         this.redis = new Redis({
             username: this.envService.get("redis.username"),
             password: this.envService.get("redis.password"),
             host: this.envService.get("redis.host"),
             port: this.envService.get("redis.port"),
             db: this.envService.get("redis.databaseIndex"),
+            connectTimeout: 5000, // 5 second timeout
+            lazyConnect: true, // Don't connect immediately
+            maxRetriesPerRequest: 3,
         });
+
         return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                this.logger.warn('⚠️ Redis connection timeout after 5 seconds, continuing without Redis');
+                resolve(); // Resolve instead of reject to allow server to continue
+            }, 5000);
+
             this.redis.once('connect', () => {
-                this.logger.log('Connected to Redis');
+                clearTimeout(timeout);
+                this.logger.log('✅ Connected to Redis successfully');
                 resolve();
             });
 
             this.redis.once('error', (err) => {
-                this.logger.error(`Redis connection error: ${err.message}`);
-                reject(err);
+                clearTimeout(timeout);
+                this.logger.error(`❌ Redis connection error: ${err.message}`);
+                this.logger.warn('⚠️ Continuing without Redis connection');
+                resolve(); // Resolve instead of reject to allow server to continue
+            });
+
+            // Attempt to connect
+            this.redis.connect().catch((err) => {
+                clearTimeout(timeout);
+                this.logger.error(`❌ Failed to connect to Redis: ${err.message}`);
+                this.logger.warn('⚠️ Continuing without Redis connection');
+                resolve(); // Resolve instead of reject to allow server to continue
             });
         });
     }

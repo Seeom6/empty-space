@@ -1,0 +1,18 @@
+{
+  "id": "account-locked",
+  "name": "Account Locked",
+  "subject": "Your {{companyName}} account has been locked",
+  "category": "security",
+  "priority": 5,
+  "htmlTemplate": "\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Account Locked</title>\n</head>\n<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;\">\n    <div style=\"background: #f8d7da; border: 1px solid #f5c6cb; padding: 30px; border-radius: 10px;\">\n        <h1 style=\"color: #721c24; text-align: center; margin-bottom: 30px;\">🔒 Account Locked</h1>\n        \n        <p style=\"font-size: 16px; margin-bottom: 20px;\">\n            Hello {{firstName}},\n        </p>\n        \n        <p style=\"font-size: 16px; margin-bottom: 20px;\">\n            Your {{companyName}} account has been temporarily locked due to multiple failed login attempts.\n        </p>\n        \n        <div style=\"background: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;\">\n            <p><strong>Locked at:</strong> {{timestamp}}</p>\n            <p><strong>Reason:</strong> Multiple failed login attempts detected</p>\n        </div>\n        \n        <p style=\"font-size: 16px; margin-bottom: 20px;\">\n            For security reasons, your account will be automatically unlocked after a waiting period. If you believe this was an error or need immediate assistance, please contact our support team.\n        </p>\n        \n        <p style=\"font-size: 14px; color: #7f8c8d;\">\n            Contact support: {{supportEmail}}\n        </p>\n    </div>\n</body>\n</html>",
+  "textTemplate": "\nHello {{firstName}},\n\nYour {{companyName}} account has been temporarily locked due to multiple failed login attempts.\n\nLocked at: {{timestamp}}\nReason: Multiple failed login attempts detected\n\nFor security reasons, your account will be automatically unlocked after a waiting period. If you believe this was an error or need immediate assistance, please contact our support team.\n\nContact support: {{supportEmail}}\n\nBest regards,\n{{companyName}} Security Team\n",
+  "variables": [
+    "firstName",
+    "timestamp",
+    "companyName",
+    "supportEmail"
+  ],
+  "isActive": true,
+  "createdAt": "2025-09-22T11:53:16.641Z",
+  "updatedAt": "2025-09-22T11:53:16.641Z"
+}

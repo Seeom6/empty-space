@@ -98,12 +98,69 @@ export class AuthService {
 
   /**
    * User Login
-   * POST /auth/login
+   * POST /admin/auth/login
    * Sets accessToken and refreshToken cookies
    */
   static async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/website/auth/login', credentials);
-    return response.data;
+    try {
+      const response = await apiClient.post<AdminLoginResponse>('/admin/auth/login', credentials);
+      console.log('✅ Login API response:', response.data);
+
+      // For admin login, the response contains access_token and user info
+      // Transform admin login response to match expected LoginResponse format
+      if (response.data.access_token) {
+        // Decode the JWT to get user info
+        const tokenPayload = AuthService.decodeJWT(response.data.access_token);
+
+        if (!tokenPayload) {
+          console.warn('⚠️ Could not decode JWT token, using response data');
+        }
+
+        // Normalize the role format (convert snake_case to UPPER_CASE)
+        const rawRole = tokenPayload?.accountRole || response.data.user?.accountRole || 'ADMIN';
+        const normalizedRole = AuthService.normalizeRole(rawRole);
+
+        console.log('🔄 Role normalization:', { rawRole, normalizedRole });
+
+        // Create user object from token payload and response
+        // Note: AdminLoginResponse.user only has id, email, accountRole
+        const user = {
+          id: tokenPayload?.accountId || response.data.user?.id || 'unknown',
+          email: tokenPayload?.email || response.data.user?.email || credentials.email,
+          firstName: 'Admin', // Default for admin users (not in AdminLoginResponse)
+          lastName: 'User',   // Default for admin users (not in AdminLoginResponse)
+          accountRole: normalizedRole as 'EMPLOYEE' | 'ADMIN' | 'SUPER_ADMIN',
+          isVerified: tokenPayload?.isVerified || true,
+          phoneNumber: undefined, // Not available in AdminLoginResponse
+          employee: undefined     // Not available in AdminLoginResponse
+        };
+
+        console.log('✅ Created user object:', user);
+
+        return {
+          data: {
+            user: user
+          },
+          message: 'Login successful'
+        };
+      } else {
+        console.error('❌ No access token in response:', response.data);
+        throw new Error('Login failed: No access token received');
+      }
+    } catch (error: any) {
+      console.error('❌ Login error:', error);
+
+      // Re-throw with better error message
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      } else if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.message) {
+        throw error;
+      } else {
+        throw new Error('Login failed: Unknown error');
+      }
+    }
   }
 
   /**
@@ -221,21 +278,35 @@ export class AuthService {
 
   /**
    * Get current user profile
-   * GET /website/auth/me
+   * GET /website/account/me
    * Requires accessToken cookie
    */
-  static async me(): Promise<{ data: { user: User }; message: string }> {
-    const response = await apiClient.get<{ data: { user: User }; message: string }>('/website/auth/me');
+  static async me(): Promise<{ data: { data: { user: User }; message: string } }> {
+    const response = await apiClient.get<{ data: { data: { user: User }; message: string } }>('/website/account/me');
+    console.log('🔍 AuthService.me() - Raw axios response:', response);
+    console.log('🔍 AuthService.me() - Response data:', response.data);
     return response.data;
   }
 
   /**
    * Check if user is authenticated via cookies
+   * Note: HTTP-only cookies cannot be read by JavaScript, so we'll try to make an API call
    */
   static isAuthenticatedViaCookies(): boolean {
+    // First, try to read non-HTTP-only cookies if they exist
     const accessToken = getCookie('accessToken');
     const refreshToken = getCookie('refreshToken');
-    return !!(accessToken || refreshToken);
+
+    // If we can read cookies and they exist, user is authenticated
+    if (accessToken || refreshToken) {
+      console.log('🔍 Found readable auth cookies:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+      return true;
+    }
+
+    // If no readable cookies, we can't determine auth state from cookies alone
+    // The auth provider will need to make an API call to check
+    console.log('🔍 No readable auth cookies found - will need API call to verify');
+    return false;
   }
 
   /**
@@ -264,5 +335,67 @@ export class AuthService {
       });
 
     }
+  }
+
+  /**
+   * Decode JWT token to extract payload
+   */
+  static decodeJWT(token: string): any {
+    try {
+      if (!token || typeof token !== 'string') {
+        console.warn('Invalid token provided to decodeJWT:', token);
+        return null;
+      }
+
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.warn('Invalid JWT format - expected 3 parts, got:', parts.length);
+        return null;
+      }
+
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
+      // Add padding if needed
+      const paddedBase64 = base64 + '='.repeat((4 - base64.length % 4) % 4);
+
+      const jsonPayload = decodeURIComponent(
+        atob(paddedBase64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+
+      const parsed = JSON.parse(jsonPayload);
+      console.log('✅ Successfully decoded JWT payload:', parsed);
+      return parsed;
+    } catch (error) {
+      console.error('❌ Failed to decode JWT:', error, 'Token:', token?.substring(0, 50) + '...');
+      return null;
+    }
+  }
+
+  /**
+   * Normalize role format to match frontend expectations
+   * Converts: super_admin -> SUPER_ADMIN, admin -> ADMIN, etc.
+   */
+  static normalizeRole(role: string): string {
+    if (!role) return 'employee';
+
+    // Convert to lowercase and normalize format to match AccountRole enum
+    const normalized = role.toLowerCase();
+
+    // Map common role variations to match AccountRole enum values
+    const roleMap: Record<string, string> = {
+      'super_admin': 'super_admin',
+      'superadmin': 'super_admin',
+      'admin': 'admin',
+      'employee': 'employee',
+      'operator': 'operator',
+      'user': 'employee', // Map user to employee
+      'seller': 'seller',
+    };
+
+    return roleMap[normalized] || 'employee';
   }
 }

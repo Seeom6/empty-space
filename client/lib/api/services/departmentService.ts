@@ -18,9 +18,35 @@ export class DepartmentService {
    * GET /admin/department
    */
   static async getAll(): Promise<Department[]> {
-    return apiRequest(() =>
-      apiClient.get<Department[]>(DepartmentService.BASE_PATH)
-    );
+    try {
+      const response = await apiRequest(async () => {
+        return apiClient.get<{ data: Department[]; meta: any }>(DepartmentService.BASE_PATH);
+      });
+
+      console.log('🔍 FINAL DEBUG - response:', response);
+      console.log('🔍 FINAL DEBUG - response type:', typeof response);
+
+      // Cast response to the correct type since apiRequest returns the response.data
+      const responseData = response as any;
+      console.log('🔍 FINAL DEBUG - responseData:', responseData);
+      console.log('🔍 FINAL DEBUG - responseData.data:', responseData.data);
+      console.log('🔍 FINAL DEBUG - responseData.data.data:', responseData.data?.data);
+      console.log('🔍 FINAL DEBUG - Array.isArray(responseData.data.data):', Array.isArray(responseData.data?.data));
+
+      // CRITICAL FIX: Response structure is {data: {data: Department[], meta: {...}}}
+      // We need to extract the departments array from responseData.data.data (double nested)
+      if (responseData && responseData.data && responseData.data.data && Array.isArray(responseData.data.data)) {
+        console.log('✅ Returning departments array with length:', responseData.data.data.length);
+        return responseData.data.data;
+      } else {
+        console.warn('⚠️ Unexpected response structure, returning empty array');
+        console.warn('⚠️ Response structure:', responseData);
+        return [];
+      }
+    } catch (error) {
+      console.error('❌ DepartmentService.getAll - Error:', error);
+      return [];
+    }
   }
 
   /**
@@ -31,10 +57,10 @@ export class DepartmentService {
     if (!id) {
       throw new Error('Department ID is required');
     }
-    
-    return apiRequest(() =>
-      apiClient.get<Department>(`${DepartmentService.BASE_PATH}/${id}`)
-    );
+
+    return apiRequest(async () => {
+      return apiClient.get<Department>(`${DepartmentService.BASE_PATH}/${id}`);
+    });
   }
 
   /**
@@ -45,9 +71,9 @@ export class DepartmentService {
     // Validate required fields
     DepartmentService.validateCreateRequest(data);
 
-    return apiRequest(() =>
-      apiClient.post<Department>(DepartmentService.BASE_PATH, data)
-    );
+    return apiRequest(async () => {
+      return apiClient.post<Department>(DepartmentService.BASE_PATH, data);
+    });
   }
 
   /**
@@ -58,13 +84,13 @@ export class DepartmentService {
     if (!id) {
       throw new Error('Department ID is required');
     }
-    
+
     // Validate required fields
     DepartmentService.validateUpdateRequest(data);
 
-    return apiRequest(() =>
-      apiClient.put<Department>(`${DepartmentService.BASE_PATH}/${id}`, data)
-    );
+    return apiRequest(async () => {
+      return apiClient.put<Department>(`${DepartmentService.BASE_PATH}/${id}`, data);
+    });
   }
 
   /**
@@ -105,16 +131,23 @@ export class DepartmentService {
    * Validate update department request
    */
   private static validateUpdateRequest(data: UpdateDepartmentRequest): void {
-    // Name is required and must be 3-255 characters
-    if (!data.name || data.name.trim() === '') {
-      throw new Error('Department name is required');
+    // At least one field must be provided
+    if (!data.name && !data.description && !data.status) {
+      throw new Error('At least one field must be provided for update');
     }
-    
-    if (data.name.length < 3 || data.name.length > 255) {
-      throw new Error('Department name must be between 3 and 255 characters');
+
+    // Name validation (if provided)
+    if (data.name !== undefined) {
+      if (!data.name || data.name.trim() === '') {
+        throw new Error('Department name cannot be empty');
+      }
+
+      if (data.name.length < 3 || data.name.length > 255) {
+        throw new Error('Department name must be between 3 and 255 characters');
+      }
     }
-    
-    // Status validation (optional)
+
+    // Status validation (if provided)
     if (data.status && !['ACTIVE', 'INACTIVE'].includes(data.status)) {
       throw new Error('Status must be either ACTIVE or INACTIVE');
     }
@@ -187,18 +220,13 @@ export class DepartmentService {
    * Update multiple departments status
    */
   static async bulkUpdateStatus(
-    departmentIds: string[], 
+    departmentIds: string[],
     status: 'ACTIVE' | 'INACTIVE'
   ): Promise<Department[]> {
     const updatePromises = departmentIds.map(async (id) => {
-      const department = await DepartmentService.getById(id);
-      return DepartmentService.update(id, {
-        name: department.name,
-        description: department.description,
-        status,
-      });
+      return DepartmentService.update(id, { status });
     });
-    
+
     return Promise.all(updatePromises);
   }
 }
